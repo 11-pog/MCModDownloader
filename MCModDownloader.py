@@ -7,22 +7,19 @@ class MCModDownloader:
         self.modrinth_api = ModrinthAPI()
         #self.curseforge_api = CurseforgeAPI() WIP
 
-    async def main():
-        api = ModrinthAPI()
+    async def fetch_latest_from_url(self, url, parameters):
+        MDAPI = self.modrinth_api
 
-        url = 'https://modrinth.com/mod/distanthorizons'
+        modData = await MDAPI.get_project(url)
 
-        parameters = {
-            'game_versions': ['1.20.1'],
-            'loader': ['forge'],
-            'version_type': []
-        }
+        version, mod = await MDAPI.download(parameters, url=url)    
 
-        modData = await api.get_project(url)
+        name = f"{modData['slug']}_{version['version_number']}.jar"  
+        return name, mod 
 
-        version, mod = await api.download(parameters, url=url)    
-
-        with open(f"{modData['slug']}_{version['version_number']}.jar", "wb") as f:
-            f.write(mod)
-
-asyncio.run(main())
+    async def saveFile(self, file, name):
+        try:
+            with open(name, "wb") as f:
+                f.write(file)
+        except Exception as e:
+            print(f"Error saving file: {e}")
