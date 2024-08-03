@@ -46,8 +46,10 @@ class MCModDownloader:
 
     async def saveFile(self, file, name, path):
         try:
-            fullPath = os.path.join(path, name)
-            with open(fullPath, "wb") as f:
+            modPath = os.path.join(path, "mods")
+            os.makedirs(modPath, exist_ok=True)
+            finalPath = os.path.join(modPath, name)
+            with open(finalPath, "wb") as f:
                 f.write(file)
         except Exception as e:
             print(f"Error saving file: {e}")

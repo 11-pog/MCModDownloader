@@ -1,7 +1,22 @@
 import argparse
 import asyncio
 from MCModDownloader import MCModDownloader
+import os
 import concurrent.futures
+
+
+
+async def download_mod(url, params, output):
+    try:
+        name, mod = await MCMD.download_latest(url, params)
+        await MCMD.saveFile(mod, name, output)
+        print(f"sucessfully downloaded {name}")
+        successful.append(f"- {name}")
+    except Exception as e:
+        print(f"Error downloading {url}: {e}")
+        failed.append(f"Failed to Download: {url}\n Cause: {e}")
+
+
 
 if __name__ == "__main__":
     MCMD = MCModDownloader()
@@ -17,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge"], nargs='+')
     parser.add_argument("-r", "--restrict", help='Restricts mod to specific version types', choices=["Release", "Beta", "Alpha"], nargs='+')
 
-    parser.add_argument("-o", "--output", help="Output directory for the mod", default="./mods")
+    parser.add_argument("-o", "--output", help="Output directory for the mod", default="./output")
 
     args = parser.parse_args()
     
@@ -27,30 +42,38 @@ if __name__ == "__main__":
         'version_type': args.restrict
     }
 
+    successful = []
+    failed = []
+
     if args.mod_link is not None:
-        name, mod = asyncio.run(MCMD.download_latest(args.mod_link, parameters))
-        asyncio.run(MCMD.saveFile(mod, name, args.output))
+        asyncio.run(download_mod(args.mod_link, parameters, args.output))
 
     elif args.ml is not None:
         for link in args.ml:
-            name, mod = asyncio.run(MCMD.download_latest(link, parameters))
-            asyncio.run(MCMD.saveFile(mod, name, args.output))
+            asyncio.run(download_mod(link, parameters, args.output))
 
     else:
         try:
-            with open(args.mltxt, 'r') as file:
+            with open(args.mltxt, 'r') as file:                
                 for line in file:
                     link = line.strip()
 
                     if link:
-                        name, mod = asyncio.run(MCMD.download_latest(link, parameters))
-                        asyncio.run(MCMD.saveFile(mod, name, args.output))
+                        asyncio.run(download_mod(link, parameters, args.output))
                     
         except FileNotFoundError:
             print(f"ERROR: Input file {args.mltxt} was not found")
         except Exception as e:
             print(f"An error occurred: {e}")
 
-#def download_mod(url, params, output):
-#    name, mod = asyncio.run(MCMD.download_latest(url, params))
-#    asyncio.run(MCMD.saveFile(mod, name, output))
+    if len(successful) > 0:
+        successfulPath = os.path.join(args.output, 'Successful_downloads.txt')
+        with open(successfulPath, 'w') as f:
+            f.write('\n'.join(successful))
+
+    if len(failed) > 0:
+        failedPath = os.path.join(args.output, 'Failed_downloads.txt')
+        with open(failedPath, 'w') as f:
+            f.write('\n'.join(failed))
+
+
