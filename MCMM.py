@@ -2,7 +2,6 @@ import argparse
 import asyncio
 from MCModDownloader import MCModDownloader
 import os
-import concurrent.futures
 
 
 
