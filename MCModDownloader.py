@@ -1,6 +1,6 @@
 from MCSiteAPI import ModrinthAPI
 # from MCSiteAPI import CurseforgeAPI WIP
-import asyncio
+import os
 
 class MCModDownloader:
     def __init__(self):
@@ -17,9 +17,10 @@ class MCModDownloader:
         name = f"{modData['slug']}_{version['version_number']}.jar"  
         return name, mod 
 
-    async def saveFile(self, file, name):
+    async def saveFile(self, file, name, path):
         try:
-            with open(name, "wb") as f:
+            fullPath = os.path.join(path, name)
+            with open(fullPath, "wb") as f:
                 f.write(file)
         except Exception as e:
             print(f"Error saving file: {e}")

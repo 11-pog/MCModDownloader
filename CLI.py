@@ -27,5 +27,6 @@ if __name__ == "__main__":
 
     if args.mod_link is not None:
         name, mod = asyncio.run(MCMD.download_latest(args.mod_link, parameters))
-        asyncio.run(MCMD.saveFile(mod, name))
-    #WIP
+        asyncio.run(MCMD.saveFile(mod, name, args.output))
+
+    #Mod list is WIP
