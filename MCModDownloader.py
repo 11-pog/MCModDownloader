@@ -7,7 +7,7 @@ class MCModDownloader:
         self.modrinth_api = ModrinthAPI()
         #self.curseforge_api = CurseforgeAPI() WIP
 
-    async def fetch_latest_from_url(self, url, parameters):
+    async def download_latest(self, url, parameters):
         MDAPI = self.modrinth_api
 
         modData = await MDAPI.get_project(url)
