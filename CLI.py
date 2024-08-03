@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 from MCModDownloader import MCModDownloader
+import concurrent.futures
 
 if __name__ == "__main__":
     MCMD = MCModDownloader()
@@ -50,5 +51,6 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"An error occurred: {e}")
 
-
-    #Mod list is WIP
+#def download_mod(url, params, output):
+#    name, mod = asyncio.run(MCMD.download_latest(url, params))
+#    asyncio.run(MCMD.saveFile(mod, name, output))

@@ -1,7 +1,7 @@
 import aiohttp
-import asyncio
 import os
-from furl import furl
+
+
 
 async def _get(url, *, headers = None, params = None):
     async with aiohttp.ClientSession() as session:
@@ -13,7 +13,9 @@ async def _get(url, *, headers = None, params = None):
                     return await response.text()
             else:
                 raise Exception(f"Http get error {response.status}: {response.reason}")
-            
+
+
+
 async def _Dl_Data(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
@@ -21,9 +23,8 @@ async def _Dl_Data(url):
                 return await response.read()
             else:
                 raise Exception(f"Http get error {response.status}: {response.reason}")
-            
-def _formatParams(params):
-    return ",".join(f'"{value}"' for value in params)
+
+
 
 def _splitUrl(url, separator):
         splitUrl = url.split(separator)
@@ -33,6 +34,11 @@ def _splitUrl(url, separator):
         else:
             raise ValueError("Invalid URL")
         
+
+
+
+
+
 class ModrinthAPI:
     def __init__(self, api_url="https://api.modrinth.com"):
         self.api_url = api_url
@@ -53,25 +59,23 @@ class ModrinthAPI:
 
     async def project_files(self, project_slug, parameters):
         query = f"{self.api_url}/v2/project/{project_slug}/version"
-        
-        if parameters:
+        queryParams = {}
+
+        if parameters:          
             version = parameters['game_versions']
-            loader = parameters['loader']
-            type = parameters['version_type']
-
-            queryParams = []
-
             if version:
-                queryParams.append(f"game_versions=[{_formatParams(version)}]")
-            if loader:
-                queryParams.append(f"loaders=[{_formatParams(loader)}]")
-            if type:
-                queryParams.append(f"version_type=[{_formatParams(type)}]")
-            
-            if queryParams:
-                query += "?" + "&".join(queryParams)
+                queryParams['game_versions'] = version
 
-        fetchResult = await _get(query)
+            loader = parameters['loader']
+            if loader:
+                queryParams['loaders'] = loader
+            
+            type = parameters['version_type']
+            if type:
+                queryParams['version_type'] = type
+            
+
+        fetchResult = await _get(query, params=queryParams)
         response = sorted(fetchResult, key=lambda x: x['date_published'], reverse=True)
         return response
     
@@ -83,10 +87,10 @@ class ModrinthAPI:
             raise ValueError("You must provide either version_id or both the parameters and url")
 
         if version_id:
-            version = await ModrinthAPI.get_version(self, version_id)
+            version = await self.get_version(version_id)
         else:
             project_slug = _splitUrl(url, '/mod/')
-            versionList = await ModrinthAPI.project_files(self, project_slug, parameters)
+            versionList = await self.project_files(project_slug, parameters)
             version = versionList[0]
 
         fileUrl = version['files'][0]['url']
@@ -94,6 +98,9 @@ class ModrinthAPI:
         return version, response
 
     
+
+
+
 
 class CurseforgeAPI:
     def __init__(self, api_url="https://api.curseforge.com"):
@@ -108,7 +115,16 @@ class CurseforgeAPI:
         'x-api-key': api_key
         }
 
-    async def get_id_by_slug(self, url):
+
+
+    async def get_project(self, url):
+        mod_id = await self.get_id_by_url(url)
+        response = await _get(f"{self.api_url}/v1/mods/{mod_id}", headers=self.api_headers)
+        return response['data']
+
+
+
+    async def get_id_by_url(self, url):
         slug = _splitUrl(url, '/mc-mods/')
         data = await _get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
             'slug': slug,
@@ -120,22 +136,50 @@ class CurseforgeAPI:
 
         return result
     
+
+
+    LOADER_MAPPINGS = {
+        'forge': 1,
+        'cauldron': 2,
+        'liteloader': 3,
+        'fabric': 4,
+        'quilt': 5,
+        'neoforge': 6
+    }
+
+
+
     async def project_files(self, url, parameters=None):
+        queryParams = {}
+        
+        if parameters:            
+            version = parameters.get('game_versions')
+            if version:
+                queryParams['gameVersion'] = version
 
-        if parameters:
-            CFParams = {
+            loaders = [self.LOADER_MAPPINGS.get(x , 0) for x in parameters.get('loader', [])]
+            queryParams['modLoaderType'] = loaders
 
+            type = parameters.get('version_type')
+            if type:
+                queryParams['gameVersionTypeId'] = type
 
-                
-            }
-
-
-        id = await self.get_id_by_slug(url)
-        files = await _get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers)
+        id = await self.get_id_by_url(url)
+        files = await _get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers, params=queryParams)
 
         result = sorted(files['data'], key=lambda x: x['fileDate'], reverse=True)
 
-        print(result)
-       
-CFAPI = CurseforgeAPI()
-print(asyncio.run(CFAPI.project_files('https://www.curseforge.com/minecraft/mc-mods/mouse-tweaks')))
+        return result
+    
+
+
+    async def download(self, url,  *, parameters = None):
+        if not url:
+            raise ValueError("You must provide a valid url")
+
+        fileList = await self.project_files(url, parameters)
+        file = fileList[0]
+
+        fileUrl = file['downloadUrl']
+        response = await _Dl_Data(fileUrl)
+        return file, response
