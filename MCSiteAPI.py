@@ -56,6 +56,12 @@ class ModrinthAPI:
 
 
 
+    async def get_project_by_id(self, id):
+        response = await _get(f"{self.api_url}/v2/project/{id}")
+        return response
+
+
+
     async def get_version(self, version_id):
         response = await _get(f"{self.api_url}/v2/version/{version_id}")
         return response
@@ -127,9 +133,12 @@ class CurseforgeAPI:
 
     async def get_project(self, url):
         mod_id = await self.get_id_by_url(url)
-        response = await _get(f"{self.api_url}/v1/mods/{mod_id}", headers=self.api_headers)
-        return response['data']
+        return await self.get_project_by_id(mod_id)
+    
 
+    async def get_project_by_id(self, id):
+        response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers)
+        return response['data']
 
 
     async def get_id_by_url(self, url):

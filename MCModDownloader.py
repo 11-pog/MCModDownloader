@@ -12,27 +12,46 @@ class MCModDownloader:
 
 
 
-    async def download_latest(self, url, parameters=None):
-        match await self.get_host(url):
+    async def returnModName(self, data, host):
+        async def getModName(API, id):
+            project = await API.get_project_by_id(id)
+            return project
+
+        match host:
             case "modrinth.com":
-                MDAPI = self.modrinth_api
+                id = data[0]['project_id']
+                metadata = await getModName(self.modrinth_api, id)
+                return metadata['title']
+            case "www.curseforge.com":
+                id = data[0]['modId']
+                metadata = await getModName(self.curseforge_api, id)
+                return metadata['name']
 
-                modData = await MDAPI.get_project(url)
 
-                version, mod = await MDAPI.download(url, parameters=parameters)    
 
-                name = f"{modData['slug']}_{version['version_number']}.jar"  
-                return name, mod 
+    async def download_latest(self, url, parameters=None):
+
+        host = await self.get_host(url)
+        filename = metadata = files = None
+        
+        async def getModData(API):
+            modData = await API.get_project(url)
+            metadata, files = await API.download(url, parameters=parameters)
+
+            return modData, metadata, files
+
+        match host:
+            case "modrinth.com":
+                MDAPI = self.modrinth_api  
+                modData, metadata, files = await getModData(MDAPI)
+                filename = f"{modData['slug']}_{metadata['version_number']}.jar"  
             
             case "www.curseforge.com":
                 CFAPI = self.curseforge_api
+                modData, metadata, files = await getModData(CFAPI)
+                filename = f"{modData['slug']}_{metadata['id']}.jar"
 
-                modData = await CFAPI.get_project(url)
-
-                version, mod = await CFAPI.download(url, parameters=parameters)
-
-                name = f"{modData['slug']}_{version['id']}.jar"
-                return name, mod
+        return filename, files, metadata, host
 
 
 
