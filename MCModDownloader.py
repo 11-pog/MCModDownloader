@@ -19,7 +19,7 @@ class MCModDownloader:
 
                 modData = await MDAPI.get_project(url)
 
-                version, mod = await MDAPI.download(parameters, url=url)    
+                version, mod = await MDAPI.download(url, parameters=parameters)    
 
                 name = f"{modData['slug']}_{version['version_number']}.jar"  
                 return name, mod 
@@ -31,7 +31,7 @@ class MCModDownloader:
 
                 version, mod = await CFAPI.download(url, parameters=parameters)
 
-                name = f"{modData['slug']}_{version['displayName'].replace(' ', '-').replace('/', '-')}.jar"
+                name = f"{modData['slug']}_{version['id']}.jar"
                 return name, mod
 
 
