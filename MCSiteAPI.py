@@ -1,19 +1,28 @@
 import aiohttp
 import os
+import asyncio
 from furl import furl
 
+class Http404Error(Exception):
+    pass
 
+class HttpError(Exception):
+    pass
 
-async def _get(url, *, headers = None, params = None):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers, params=params) as response:
-            if response.status == 200:
-                if 'application/json' in response.headers.get('Content-Type', ''):
-                    return await response.json()
-                else:
-                    return await response.text()
-            else:
-                raise Exception(f"Http get error {response.status}: {response.reason}")
+async def _get(url, *, headers = None, params = None, retries=7):
+    for attempt in range(retries):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, params=params) as response:
+                if response.status == 200:
+                    if 'application/json' in response.headers.get('Content-Type', ''):
+                        return await response.json()
+                    else:
+                        return await response.text()
+                elif response.status != 404:
+                    raise HttpError(f"Http get error {response.status}: {response.reason}")
+        await asyncio.sleep(0.5)
+                
+    raise Http404Error()
 
 
 
@@ -44,9 +53,12 @@ class ModrinthAPI:
 
 
 
-    async def get_project_by_id(self, id):
-        response = await _get(f"{self.api_url}/v2/project/{id}")
-        return response
+    async def get_project_by_id(self, id, *, retries = 7):
+        try:
+            response = await _get(f"{self.api_url}/v2/project/{id}", retries=retries)
+            return response
+        except Http404Error:
+            return None
     
 
 
@@ -132,17 +144,23 @@ class CurseforgeAPI:
 
 
     async def get_id_by_url(self, url):
-        slug = self.utils.get_slug_by_url(url)
+        slug = self.utils.get_slug_by_url(url)  
+        return await self.get_id_by_slug(slug)
+    
+
+
+    async def get_id_by_slug(self, slug):
         data = await _get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
             'slug': slug,
             'classId': '6',
             'gameId': '432'
         })
 
-        result = data['data'][0]['id']
-
-        return result
-    
+        if len(data['data']) > 0:
+            result = data['data'][0]['id']
+            return result
+        else:
+            return None
 
 
     async def get_slug_by_url(self, url):

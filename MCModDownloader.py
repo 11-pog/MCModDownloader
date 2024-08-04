@@ -1,5 +1,6 @@
 from MCSiteAPI import ModrinthAPI
 from MCSiteAPI import CurseforgeAPI
+from MCSiteAPI import utils
 from furl import furl
 import os
 
@@ -72,3 +73,31 @@ class MCModDownloader:
                 f.write(file)
         except Exception as e:
             print(f"Error saving file: {e}")
+
+
+
+
+
+class MCM_Utils:
+    def __init__(self):
+        self.modrinth_api = ModrinthAPI()
+        self.curseforge_api = CurseforgeAPI()
+
+    async def get_equivalent_ids(self, id, host):
+        CFId = MDId = None
+
+        match host:
+            case "modrinth.com":   
+                MDId = id['project_id']
+                project = await self.modrinth_api.get_project_by_id(MDId)
+                if project.get('slug'):
+                    CFId = await self.curseforge_api.get_id_by_slug(project['slug'])
+            case "www.curseforge.com":
+                CFId = id['modId']
+                project = await self.curseforge_api.get_project_by_id(CFId)
+                if project.get('slug'):
+                    mdProject = await self.modrinth_api.get_project_by_id(project['slug'])
+                    if mdProject is not None:
+                        MDId = mdProject['id']
+        print(f"Equivalent ID's: {MDId}, {CFId}")
+        return [MDId, CFId]
