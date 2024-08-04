@@ -3,6 +3,7 @@ import os
 from furl import furl
 
 
+
 async def _get(url, *, headers = None, params = None):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as response:
@@ -31,27 +32,14 @@ async def _format_query(query):
     return ','.join(formattedQuery)
 
 
-def _splitUrl(url):
-        splitUrl = url.split('/')
-
-        if len(splitUrl) >= 3:
-            return splitUrl[-1]
-        else:
-            raise ValueError("Invalid URL")
-        
-
-
-
-
-
 class ModrinthAPI:
     def __init__(self, api_url="https://api.modrinth.com"):
         self.api_url = api_url
+        self.utils = utils()
+  
 
-
-    
     async def get_project(self, url):
-        response = await _get(f"{self.api_url}/v2/project/{_splitUrl(url)}")
+        response = await _get(f"{self.api_url}/v2/project/{self.utils.get_slug_by_url(url)}")
         return response
 
 
@@ -59,7 +47,7 @@ class ModrinthAPI:
     async def get_project_by_id(self, id):
         response = await _get(f"{self.api_url}/v2/project/{id}")
         return response
-
+    
 
 
     async def get_version(self, version_id):
@@ -99,7 +87,7 @@ class ModrinthAPI:
         if not url:
             raise ValueError("You must provide a valid url")
 
-        project_slug = _splitUrl(url)
+        project_slug = self.utils.get_slug_by_url(url)
         versionList = await self.project_files(project_slug, parameters)
 
         if len(versionList) == 0:
@@ -120,6 +108,7 @@ class CurseforgeAPI:
     def __init__(self, api_url="https://api.curseforge.com"):
         self.api_url = api_url
         api_key = os.environ.get('CF_API_KEY')
+        self.utils = utils()
 
         if api_key is None:
             raise ValueError("CF_API_KEY enviroment variable is not set")
@@ -130,19 +119,20 @@ class CurseforgeAPI:
         }
 
 
-
     async def get_project(self, url):
         mod_id = await self.get_id_by_url(url)
         return await self.get_project_by_id(mod_id)
     
+
 
     async def get_project_by_id(self, id):
         response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers)
         return response['data']
 
 
+
     async def get_id_by_url(self, url):
-        slug = _splitUrl(url)
+        slug = self.utils.get_slug_by_url(url)
         data = await _get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
             'slug': slug,
             'classId': '6',
@@ -153,6 +143,12 @@ class CurseforgeAPI:
 
         return result
     
+
+
+    async def get_slug_by_url(self, url):
+        slug = self.utils.get_slug_by_url(url)
+        return slug
+
 
 
     LOADER_MAPPINGS = {
@@ -222,3 +218,16 @@ class CurseforgeAPI:
         fileUrl = file['downloadUrl']
         response = await _Dl_Data(fileUrl)
         return file, response
+    
+
+class utils:
+    def __init__(self):
+        pass
+    
+    def get_slug_by_url(self, url):
+        splitUrl = url.split('/')
+
+        if len(splitUrl) >= 3:
+            return splitUrl[-1]
+        else:
+            raise ValueError("Invalid URL")
