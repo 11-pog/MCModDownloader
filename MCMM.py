@@ -72,6 +72,7 @@ async def main(mainArguments):
     else:
         await multi_download(mainArguments.mltxt, parameters, mainArguments.output)
 
+    os.makedirs(mainArguments.output, exist_ok=True)
 
     if len(successful) > 0:
         successfulPath = os.path.join(mainArguments.output, 'Successful_downloads.txt')
