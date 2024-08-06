@@ -16,3 +16,9 @@ We're not responsible for any damage caused by this lib, including but not limit
 - Non-Existence
 - Enlightment
 - *Death*
+
+## License and Copyright Information
+
+### Copyright
+
+This shit is copyrighted by who knows and is licensed under no license lmfao
