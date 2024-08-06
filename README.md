@@ -9,7 +9,7 @@ We're not responsible for any damage caused by this lib, including but not limit
 
 - Loss of productivity
 - Irreversible brain damage
-- Locked-In Syndrome (LIS)/PseudoComa
+- PseudoComa
 - Spontaneous combustion
 - High doses of radiation poisoning
 - Deep Root Disease
