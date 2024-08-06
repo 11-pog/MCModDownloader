@@ -137,8 +137,8 @@ class CurseforgeAPI:
     
 
 
-    async def get_project_by_id(self, id):
-        response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers)
+    async def get_project_by_id(self, id, *, retries=7):
+        response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers, retries=retries)
         return response['data']
 
 

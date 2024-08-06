@@ -91,17 +91,33 @@ async def main(mainArguments):
         if len(missingDependencies) > 0:
             print("Missing Dependencies FOUND")
             print(missingDependencies)
-
+            
+            txtfile = []
+            tasks = []
+            
+            async def getData(api, name, id):
+                project = await api.get_project_by_id(id, retries=20)
+                return project[name]
+                
+            async def getTitle(dep):
+                data = None
+                if dep[0] is not None:
+                    data = await getData(MRAPI, 'title', dep[0])
+                else:
+                    data = await getData(CFAPI, 'name', dep[1])
+                txtfile.append(data)
+                
+            for dep in missingDependencies:
+                tasks.append(getTitle(dep))
+                
+            await asyncio.gather(*tasks)
+                           
             if mainArguments.dd:
                 pass #WIP PLACEHOLDER
-            else:
-                txtfile = [
-                    (await MRAPI.get_project_by_id(dep[0], retries=20))['title'] if dep[0] is not None
-                       else (await CFAPI.get_project_by_id(dep[1]))['name']
-                    for dep in missingDependencies
-                ]
+            else:               
+                dependencyPath = os.path.join(mainArguments.output, 'MissingDependencies.txt')           
+                txtfile.sort()
                 
-                dependencyPath = os.path.join(mainArguments.output, 'MissingDependencies.txt')
                 with open(dependencyPath, 'w') as f:
                     f.write("- " + "\n- ".join(txtfile))
 
