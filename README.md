@@ -21,4 +21,4 @@ We're not responsible for any damage caused by this lib, including but not limit
 
 ### Copyright
 
-This shit is copyrighted by who knows and is licensed under no license lmfao
+This shit is copyrighted by who knows and is licensed by absolutely no one lmfao
