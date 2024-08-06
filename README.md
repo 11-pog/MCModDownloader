@@ -8,7 +8,7 @@ Supports single mod downloads, batch downloads from a list, and dependency resol
 We're not responsible for any damage caused by this lib, including but not limited to:
 
 - Loss of productivity
-- Irreversible brain damage
+- Brain damage caused by bad code
 - PseudoComa
 - Spontaneous combustion
 - High doses of radiation poisoning
