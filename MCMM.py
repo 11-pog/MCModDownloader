@@ -95,20 +95,20 @@ async def main(mainArguments):
             txtfile = []
             tasks = []
             
-            async def getData(api, name, id):
-                project = await api.get_project_by_id(id, retries=20)
-                return project[name]
+            dataTypeTable = {
+                0: ['title', 'name'],
+                1: ['', ''] #placeholder
+            }
+            
+            async def getName(dep: str):
+                types = [['title', 'name']]
+                #name = await stuff                
+                #txtfile.append(name)
+
                 
-            async def getTitle(dep):
-                data = None
-                if dep[0] is not None:
-                    data = await getData(MRAPI, 'title', dep[0])
-                else:
-                    data = await getData(CFAPI, 'name', dep[1])
-                txtfile.append(data)
                 
             for dep in missingDependencies:
-                tasks.append(getTitle(dep))
+                tasks.append(getName(dep))
                 
             await asyncio.gather(*tasks)
                            
@@ -120,8 +120,6 @@ async def main(mainArguments):
                 
                 with open(dependencyPath, 'w') as f:
                     f.write("- " + "\n- ".join(txtfile))
-
-                await MCMD.returnModName(dependencyIdList[0]['data'], dependencyIdList[0]['host'])
 
 
     if len(dependencyIdList) > 0:

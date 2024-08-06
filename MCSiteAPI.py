@@ -9,7 +9,7 @@ class Http404Error(Exception):
 class HttpError(Exception):
     pass
 
-async def _get(url, *, headers = None, params = None, retries=7):
+async def _get(url: str, *, headers: dict = None, params: dict = None, retries: int = 7):
     for attempt in range(retries):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
@@ -26,7 +26,7 @@ async def _get(url, *, headers = None, params = None, retries=7):
 
 
 
-async def _Dl_Data(url):
+async def _Dl_Data(url: str):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
             if response.status == 200:
@@ -36,7 +36,7 @@ async def _Dl_Data(url):
 
 
 
-async def _format_query(query):
+async def _format_query(query: str):
     formattedQuery = [f'"{x}"' for x in query]
     return ','.join(formattedQuery)
 
@@ -47,13 +47,13 @@ class ModrinthAPI:
         self.utils = utils()
   
 
-    async def get_project(self, url):
+    async def get_project(self, url: str):
         response = await _get(f"{self.api_url}/v2/project/{self.utils.get_slug_by_url(url)}")
         return response
 
 
 
-    async def get_project_by_id(self, id, *, retries = 7):
+    async def get_project_by_id(self, id: str, *, retries: int = 7):
         try:
             response = await _get(f"{self.api_url}/v2/project/{id}", retries=retries)
             return response
@@ -62,13 +62,13 @@ class ModrinthAPI:
     
 
 
-    async def get_version(self, version_id):
+    async def get_version(self, version_id: str):
         response = await _get(f"{self.api_url}/v2/version/{version_id}")
         return response
     
 
 
-    async def project_files(self, project_slug, parameters = None):
+    async def project_files(self, project_slug: str, parameters: dict = None):
         query = f"{self.api_url}/v2/project/{project_slug}/version"
         
         if parameters:     
@@ -94,7 +94,7 @@ class ModrinthAPI:
     
 
 
-    async def download(self, url, *,  parameters = None):
+    async def download(self, url: str, *,  parameters: dict = None):
         version = None
         if not url:
             raise ValueError("You must provide a valid url")
@@ -131,25 +131,25 @@ class CurseforgeAPI:
         }
 
 
-    async def get_project(self, url):
+    async def get_project(self, url: str):
         mod_id = await self.get_id_by_url(url)
         return await self.get_project_by_id(mod_id)
     
 
 
-    async def get_project_by_id(self, id, *, retries=7):
+    async def get_project_by_id(self, id: int, *, retries: int=7):
         response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers, retries=retries)
         return response['data']
 
 
 
-    async def get_id_by_url(self, url):
+    async def get_id_by_url(self, url: str):
         slug = self.utils.get_slug_by_url(url)  
         return await self.get_id_by_slug(slug)
     
 
 
-    async def get_id_by_slug(self, slug):
+    async def get_id_by_slug(self, slug: str):
         data = await _get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
             'slug': slug,
             'classId': '6',
@@ -163,7 +163,7 @@ class CurseforgeAPI:
             return None
 
 
-    async def get_slug_by_url(self, url):
+    async def get_slug_by_url(self, url: str):
         slug = self.utils.get_slug_by_url(url)
         return slug
 
@@ -180,7 +180,7 @@ class CurseforgeAPI:
 
 
 
-    async def project_files(self, url, parameters=None):
+    async def project_files(self, url: str, parameters: dict=None):
         finalParamList = []
         id = await self.get_id_by_url(url)
         finalFiles = []
@@ -222,7 +222,7 @@ class CurseforgeAPI:
     
 
 
-    async def download(self, url,  *, parameters = None):
+    async def download(self, url: str,  *, parameters: dict = None):
         if not url:
             raise ValueError("You must provide a valid url")
 
@@ -242,7 +242,7 @@ class utils:
     def __init__(self):
         pass
     
-    def get_slug_by_url(self, url):
+    def get_slug_by_url(self, url: str):
         splitUrl = url.split('/')
 
         if len(splitUrl) >= 3:
