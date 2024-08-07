@@ -159,11 +159,7 @@ async def main(mainArguments):
 
 
     
-
-
-
-
-if __name__ == "__main__":
+def run():
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")
 
     input = parser.add_mutually_exclusive_group(required=True)
@@ -183,3 +179,7 @@ if __name__ == "__main__":
         asyncio.run(main(args))
     except SystemExit:
         print("Invalid commands or missing required commands, use --help to see the command list")
+
+
+if __name__ == "__main__":
+    run()
