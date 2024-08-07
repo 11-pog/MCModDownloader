@@ -1,6 +1,6 @@
 # MCM_Utils
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from typing import Literal
 from furl import furl
 

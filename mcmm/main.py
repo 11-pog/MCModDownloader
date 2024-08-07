@@ -2,9 +2,9 @@
 
 import argparse
 import asyncio
-from mcmm.MCModDownloader import MCModDownloader
-from mcmm.MCM_Utils import MCM_Utils
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from MCModDownloader import MCModDownloader
+from MCM_Utils import MCM_Utils
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI
 import os
 
 MCMD = MCModDownloader()

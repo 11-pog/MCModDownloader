@@ -1,7 +1,7 @@
 # MCModDownloader.py
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
-from mcmm.MCM_Utils import MCM_Utils
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
+from MCM_Utils import MCM_Utils
 from typing import Literal
 import os
 import asyncio
@@ -45,9 +45,9 @@ class MCModDownloader:
         failedStatus = False   
         
         try:
-            name, mod, metadata, host = await self.download_latest(url, params)
-            await self.saveFile(mod, name, output)
-            print(f"sucessfully downloaded {name}")
+            result, mod, metadata, host = await self.download_latest(url, params)
+            await self.saveFile(mod, result, output)
+            print(f"sucessfully downloaded {result}")
             
             downloadedId = (
                 {'data': metadata['modId'], 'host': host}
@@ -57,8 +57,6 @@ class MCModDownloader:
             
             if len(metadata['dependencies']) > 0:
                 dependencyId = {'data': metadata['dependencies'], 'host': host}
-                           
-            result = name
             
 
         except Exception as e:
@@ -73,9 +71,11 @@ class MCModDownloader:
     async def multi_download(self, linklist: list[str], params: dict[str, str], output: str) -> tuple[list[str], list[str], list[str], list[str]]:
         task = []
         
-        successfulList = failedList = []
+        successfulList = []
+        failedList = []
                 
-        dependencyList = downloadedList = []
+        dependencyList = []
+        downloadedList = []
                 
         async def _simultaneousDownloads(url, params: dict[str, str], output: str):
             failedStatus, result, dlid, dpid = await self.download_mod(url, params, output)
