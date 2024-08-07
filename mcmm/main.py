@@ -2,7 +2,8 @@
 
 import argparse
 import asyncio
-from mcmm.MCModDownloader import MCModDownloader, MCM_Utils
+from mcmm.MCModDownloader import MCModDownloader
+from mcmm.MCM_Utils import MCM_Utils
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 import os
 
@@ -17,44 +18,6 @@ failed = []
 downloadedIdList = []
 dependencyIdList = []
 
-async def download_mod(url, params, output):
-    try:
-        name, mod, metadata, host = await MCMD.download_latest(url, params)
-        await MCMD.saveFile(mod, name, output)
-        print(f"sucessfully downloaded {name}")
-        successful.append(f"{name}")
-        downloadedIdList.append({'data': metadata['modId'], 'host': host} if host == "www.curseforge.com"
-                                else {'data': metadata['project_id'], 'host': host})
-        
-        if len(metadata['dependencies']) > 0:
-            dependencyIdList.append({'data': metadata['dependencies'], 'host': host})
-
-    except Exception as e:
-        print(f"Error downloading {url}: {e}")
-        failed.append(f"Failed to Download: {url}\nCause: {e}")
-
-
-
-
-async def multi_download(txtfile, params, output):
-    try:
-        with open(txtfile, 'r') as file:      
-            task = []
-            for line in file:
-                link = line.strip()
-                if link:
-                    task.append(download_mod(link, params, output))
-                    #await download_mod(link, parameters, args.output)
-            await asyncio.gather(*task)
-                    
-    except FileNotFoundError:
-        print(f"ERROR: Input file {txtfile} was not found")
-    except ValueError as e:
-        print(f"An error occurred: {e}")
-
-
-
-
 async def main(mainArguments):   
     parameters = {
         'game_versions': [mainArguments.game_version],
@@ -64,14 +27,22 @@ async def main(mainArguments):
 
 
     if mainArguments.mod_link is not None:
-        await download_mod(mainArguments.mod_link, parameters, mainArguments.output)
+        failedStatus, result, dlid, dpid = await MCMD.download_mod(mainArguments.mod_link, parameters, mainArguments.output)
+        
+        downloadedIdList.append(dlid)
+        
+        if dpid:
+            dependencyIdList.append(dpid)        
+        if not failedStatus:
+            successful.append(result)
+        else:
+            failed.append(result)
 
     elif mainArguments.ml is not None:
-        for link in mainArguments.ml:
-            await download_mod(link, parameters, mainArguments.output)
+        successful, failed, dependencyIdList, downloadedIdList = await MCMD.multi_download(mainArguments.ml, parameters, mainArguments.output)
 
     else:
-        await multi_download(mainArguments.mltxt, parameters, mainArguments.output)
+        successful, failed, dependencyIdList, downloadedIdList = await MCMD.txt_download(mainArguments.mltxt, parameters, mainArguments.output)
 
     resultsPath = os.path.join(mainArguments.output, "results")
     os.makedirs(resultsPath, exist_ok=True)
