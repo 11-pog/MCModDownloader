@@ -1,1 +1,5 @@
-Had an idea to make get_equivalent_ids not depend on the host parameter anymore, might see that
+Priority:
+- Work arount too many requests 429 error
+
+Ideas:
+- Had an idea to make get_equivalent_ids not depend on the host parameter anymore, might see that
