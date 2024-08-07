@@ -1,6 +1,6 @@
-from MCSiteAPI import ModrinthAPI
-from MCSiteAPI import CurseforgeAPI
-from MCSiteAPI import utils
+# MCModDownloader.py
+
+from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
 from typing import Union, Literal
 from furl import furl
 import os
@@ -15,7 +15,7 @@ class MCModDownloader:
 
 
 
-    async def download_latest(self, url: str, parameters: dict=None):
+    async def download_latest(self, url: str, parameters: dict=None) -> tuple[str, bytes, dict, Literal['modrinth.com', 'www.curseforge.com']]:
 
         host = await self.utils.get_host(url)
         filename = metadata = files = None
@@ -28,13 +28,11 @@ class MCModDownloader:
 
         match host:
             case "modrinth.com":
-                MDAPI = self.modrinth_api  
-                modData, metadata, files = await getModData(MDAPI)
+                modData, metadata, files = await getModData(self.modrinth_api)
                 filename = f"{modData['slug']}_{metadata['version_number']}.jar"  
             
             case "www.curseforge.com":
-                CFAPI = self.curseforge_api
-                modData, metadata, files = await getModData(CFAPI)
+                modData, metadata, files = await getModData(self.curseforge_api)
                 filename = f"{modData['slug']}_{metadata['id']}.jar"
 
         return filename, files, metadata, host
@@ -62,7 +60,7 @@ class MCM_Utils:
 
 
 
-    async def get_equivalent_ids(self, id: Union[str, int], host: Literal['modrinth.com', 'www.curseforge.com']):
+    async def get_equivalent_ids(self, id: str | int, host: Literal['modrinth.com', 'www.curseforge.com']) -> tuple[str, int]:
         CFId = MDId = None
 
         match host:
@@ -83,13 +81,15 @@ class MCM_Utils:
     
     
     
-    async def getSpecifiedData(self, dep: str, dataTypes: tuple[str, str]):
+    async def getSpecifiedData(self, dep: tuple[str, str], dataTypes: tuple[str, str], *, prioritizeCF: bool = False) -> str | dict | list:
         async def getData(api: object, name: str, id: str):
             project = await api.get_project_by_id(id, retries=20)
             return project[name]
                 
         data = None
-        if dep[0] is not None:
+        if prioritizeCF and dep[1] is not None:
+            data = await getData(self.curseforge_api, dataTypes[1], dep[1])
+        elif dep[0] is not None:
             data = await getData(self.modrinth_api, dataTypes[0], dep[0])
         else:
             data = await getData(self.curseforge_api, dataTypes[1], dep[1])
@@ -98,8 +98,8 @@ class MCM_Utils:
     
     
     
-    async def returnModName(self, data: any, host: Literal['modrinth.com', 'www.curseforge.com']):
-        async def getModName(API: object, id: Union[str, int]):
+    async def returnModName(self, data: any, host: Literal['modrinth.com', 'www.curseforge.com']) -> str:
+        async def getModName(API: object, id: str | int) -> dict:
             project = await API.get_project_by_id(id)
             return project
 
@@ -115,7 +115,7 @@ class MCM_Utils:
     
     
     
-    async def get_host(self, url: str):
+    async def get_host(self, url: str) -> str:
         f = furl(url)
         host = f.host
 

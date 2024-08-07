@@ -1,8 +1,9 @@
+# MCMM.py
+
 import argparse
 import asyncio
-from MCModDownloader import MCModDownloader, MCM_Utils
-from MCSiteAPI import ModrinthAPI
-from MCSiteAPI import CurseforgeAPI
+from mcmm.MCModDownloader import MCModDownloader, MCM_Utils
+from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 import os
 
 MCMD = MCModDownloader()
@@ -72,54 +73,55 @@ async def main(mainArguments):
     else:
         await multi_download(mainArguments.mltxt, parameters, mainArguments.output)
 
-    os.makedirs(mainArguments.output, exist_ok=True)
+    resultsPath = os.path.join(mainArguments.output, "results")
+    os.makedirs(resultsPath, exist_ok=True)
 
     if len(successful) > 0:
-        successfulPath = os.path.join(mainArguments.output, 'Successful_downloads.txt')
+        successfulPath = os.path.join(resultsPath, 'Successful_downloads.txt')
         successful.sort()
         with open(successfulPath, 'w') as f:
             f.write('- ' + '\n- '.join(successful))
 
 
     if len(failed) > 0:
-        failedPath = os.path.join(mainArguments.output, 'Failed_downloads.txt')
+        failedPath = os.path.join(resultsPath, 'Failed_downloads.txt')
         with open(failedPath, 'w') as f:
             f.write('\n'.join(failed))
 
 
-    async def dependencyHandler(missingDependencies):
-        if len(missingDependencies) > 0:
-            print("Missing Dependencies FOUND")
-            print(missingDependencies)
+    async def dependencyHandler(missingDependencies: list[tuple[str, str]]):
+        print("Missing Dependencies FOUND")
+        print(missingDependencies)
             
-            txtfile = []
-            tasks = []
             
-            dataTypeTable = {
-                0: ['title', 'name'],
-                1: ['', ''] #placeholder
-            }
+        txtfile = []
+        tasks = []
             
-            async def getName(dep: str):
-                types = [['title', 'name']]
-                #name = await stuff                
-                #txtfile.append(name)
-
+            
+        dataTypeTable = { #might not use
+            0: ['title', 'name'],
+            1: ['', ''] 
+        }  
+            
+            
+        async def getName(dep: tuple[str, int]):
+            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])              
+            txtfile.append(name)
+         
                 
+        for dep in missingDependencies:
+            tasks.append(getName(dep))
                 
-            for dep in missingDependencies:
-                tasks.append(getName(dep))
-                
-            await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
                            
-            if mainArguments.dd:
+        if mainArguments.dd:
                 pass #WIP PLACEHOLDER
-            else:               
-                dependencyPath = os.path.join(mainArguments.output, 'MissingDependencies.txt')           
-                txtfile.sort()
+        else:               
+            dependencyPath = os.path.join(resultsPath, 'MissingDependencies.txt')           
+            txtfile.sort()
                 
-                with open(dependencyPath, 'w') as f:
-                    f.write("- " + "\n- ".join(txtfile))
+            with open(dependencyPath, 'w') as f:
+                f.write("- " + "\n- ".join(txtfile))
 
 
     if len(dependencyIdList) > 0:
@@ -151,8 +153,9 @@ async def main(mainArguments):
             dependency for dependency in equivalentDependencyIds
             if not any(value in [id['data'] for id in downloadedIdList] for value in dependency)
         ]
-
-        await dependencyHandler(missingDependencies)
+        
+        if len(missingDependencies) > 0:
+            await dependencyHandler(missingDependencies)
 
 
     

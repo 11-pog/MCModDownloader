@@ -3,3 +3,5 @@
 **/output/
 **/input/
 /test.py
+/mcmm.egg-info
+/dist

@@ -1,3 +1,5 @@
+# MCSiteAPI.py
+
 import aiohttp
 import os
 import asyncio
