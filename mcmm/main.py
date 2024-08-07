@@ -172,7 +172,7 @@ def run():
     parser.add_argument("-r", "--restrict", help='Restricts mod to specific version types', choices=["Release", "Beta", "Alpha"], nargs='+')
     parser.add_argument("-d", "--dd", help="Auto downloads any missing dependencies", action="store_true")
 
-    parser.add_argument("-o", "--output", help="Output directory for the mod", default="./output")
+    parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
 
     try:
         args = parser.parse_args()
