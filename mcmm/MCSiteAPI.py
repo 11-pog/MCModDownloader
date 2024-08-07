@@ -10,24 +10,45 @@ class Http404Error(Exception):
 class HttpError(Exception):
     pass
 
-async def _get(url: str, *, headers: dict = None, params: dict = None, retries: int = 7):
-    for attempt in range(retries):
+isGlobalRatelimitReset = 0
+
+async def _get(url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
+    attempt = 0
+    while attempt < retries:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
+                    retry_after = response.headers.get('X-Ratelimit-Reset')
                     if 'application/json' in response.headers.get('Content-Type', ''):
                         return await response.json()
                     else:
                         return await response.text()
+                elif response.status == 429:
+                    retry_after = response.headers.get('X-Ratelimit-Reset')
+                    await _handle_rate_limit_reset(retry_after)
                 elif response.status != 404:
                     raise HttpError(f"Http get error {response.status}: {response.reason}")
+                else:
+                    attempt += 1
         await asyncio.sleep(0.5)
                 
     raise Http404Error()
 
 
 
-async def _Dl_Data(url: str):
+async def _handle_rate_limit_reset(retry_after: int) -> bool:
+    global isGlobalRatelimitReset
+    if isGlobalRatelimitReset <= 0:    
+        print(f'Too many requests, please wait...')
+        isGlobalRatelimitReset += 50
+    else:
+        isGlobalRatelimitReset -= 1
+    if retry_after:
+        await asyncio.sleep(int(retry_after) + 5)
+
+
+
+async def _Dl_Data(url: str) -> bytes:
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
             if response.status == 200:
@@ -250,3 +271,11 @@ class utils:
             return splitUrl[-1]
         else:
             raise ValueError("Invalid URL")
+        
+        
+        
+if __name__ == '__main__':
+    api = ModrinthAPI()
+    test = asyncio.run(api.get_project('https://modrinth.com/mod/fabric-api'))
+        
+        

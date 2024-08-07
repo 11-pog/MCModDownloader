@@ -1,6 +1,6 @@
 # MCM_Utils
 
-from MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from typing import Literal
 from furl import furl
 
@@ -72,3 +72,7 @@ class MCM_Utils:
         host = f.host
 
         return(host)  
+    
+    
+
+        
