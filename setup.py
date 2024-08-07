@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     
 setuptools.setup(
     name="mcmm",
-    version="0.1.2",
+    version="1.0.dev1",
     author="OpinionThief",
     author_email="alvessamuel872@gmail.com",
     description="A package to download Minecraft mods from Modrinth and Curseforge, comes with free spaghetti (code)",

@@ -4,4 +4,5 @@
 **/input/
 /test.py
 /mcmm.egg-info
-/dist
+/mods
+/results
