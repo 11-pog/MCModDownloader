@@ -6,7 +6,7 @@ Comes with free spaghetti code
 
 ## Disclaimer
 
-We're not responsible for any damage caused by this lib, including but not limited to:
+We're not responsible for any damage caused by this package, including but not limited to:
 
 - Brain damage
 - Emotional Damage
@@ -44,7 +44,7 @@ We're not responsible for any damage caused by this lib, including but not limit
 
 #### Some extra parameters::
 
-- "-d" does nothing, supposed to auto donwload any dependency if it exists, however currently does nothing
+- "-d" does nothing, supposed to auto download any dependency if it exists, however currently does nothing
 - "-o" optional output directory, always defaults to the folder you're in
 
 ### Output
