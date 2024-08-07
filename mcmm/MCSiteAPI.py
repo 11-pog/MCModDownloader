@@ -3,7 +3,6 @@
 import aiohttp
 import os
 import asyncio
-from furl import furl
 
 class Http404Error(Exception):
     pass
