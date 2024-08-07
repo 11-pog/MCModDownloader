@@ -1,8 +1,0 @@
-Priority:
-- Nothing
-
-Ideas:
-- Had an idea to make get_equivalent_ids not depend on the host parameter anymore, might see that
-
-Did:
-- Work arount too many requests 429 error [SUPPOSEDLY SOLVED, although i think could be inplemented WAY better]
