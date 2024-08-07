@@ -2,17 +2,19 @@
 
 A Python script to download Minecraft mods from Modrinth and Curseforge automatically.
 Supports single mod downloads, batch downloads from a list, and dependency resolution (Auto download still WIP (i dont even know if i will actually finish it lmao))
+Comes with free spaghetti code
 
 ## Disclaimer
 
 We're not responsible for any damage caused by this lib, including but not limited to:
 
-- Loss of productivity
-- Brain damage caused by bad code
+- Brain damage
+- Emotional Damage
 - PseudoComa
 - Spontaneous combustion
 - High doses of radiation poisoning
 - Deep Root Disease
+- Spaghettification
 - Non-Existence
 - Enlightment
 - *Death*
