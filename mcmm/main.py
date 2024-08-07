@@ -1,4 +1,4 @@
-# MCMM.py
+# main.py
 
 import argparse
 import asyncio
@@ -165,7 +165,7 @@ def run():
     input = parser.add_mutually_exclusive_group(required=True)
     input.add_argument("-m", "--mod-link", help="Single mod download, use a link", metavar="MOD LINK")
     input.add_argument("--ml", "--mod-list", help="Download a bunch of mods simultaneously", metavar="MOD LINKS", nargs="+")
-    input.add_argument("--mltxt", "--mod-list-txt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
+    input.add_argument("--mltxt", "--mod-list-txt", "--dltxt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
 
     parser.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
