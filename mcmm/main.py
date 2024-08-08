@@ -201,7 +201,7 @@ def run():
         if not asyncio.run(CFAPI.is_key_valid()):
             print(
                 "Invalid CurseForge api key\n"
-                "Please run \"mcmm -c cf-api-key --% [your api key]\" to define a API key\n"
+                "Please run \"mcmm -c cf-api-key [your api key]\" to define a API key\n"
                 "If you do not have a API key, go to 'https://console.curseforge.com/#/api-keys' to get one"
                 )
             return

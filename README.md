@@ -34,7 +34,7 @@ We're not responsible for any damage caused by this package, including but not l
 ### Setting up
 
 - go to [The official CurseForge dev console](https://console.curseforge.com/#%2Fapi-keys) to get a curseforge api key
-- Open your cmd, and type "mcmm -c cf-api-key --% [the key you received]"
+- Open your cmd, and type "mcmm -c cf-api-key [the key you received]"
 - As simple as that
 
 ### Usage
@@ -56,6 +56,7 @@ We're not responsible for any damage caused by this package, including but not l
 
 - "-d" does nothing, supposed to auto download any dependency if it exists, however currently does nothing
 - "-o" optional output directory, always defaults to the folder you're in
+- "-c" configs, only has "cf-api-key" yet
 
 ### Output
 
