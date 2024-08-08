@@ -23,7 +23,6 @@ We're not responsible for any damage caused by this package, including but not l
 
 - Python 3.11 or later
 - Pip
-- Some packages there
 
 ## How to use
 
