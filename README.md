@@ -34,7 +34,7 @@ We're not responsible for any damage caused by this package, including but not l
 
 ### Setting up
 
-- go to [text](https://console.curseforge.com/#%2Fapi-keys) to get a curseforge api key
+- go to [The official CurseForge dev console](https://console.curseforge.com/#%2Fapi-keys) to get a curseforge api key
 - Open your cmd, and type "mcmm -c cf-api-key --% [the key you received]"
 - As simple as that
 
