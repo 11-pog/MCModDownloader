@@ -150,12 +150,13 @@ def run():
     parser.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
     parser.add_argument("-r", "--restrict", help='Restricts mod to specific version types', choices=["Release", "Beta", "Alpha"], nargs='+')
-    parser.add_argument("-d", "--dd", help="Auto downloads any missing dependencies", action="store_true")
+    parser.add_argument("-d", "--dd", help="Auto downloads the missing dependencies [WIP]", action="store_true")
 
     parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
     
+    if args.dd:
+        print('Sorry but auto downloading dependencies is still WIP')
     
-        
     try:
         args = parser.parse_args()
         
