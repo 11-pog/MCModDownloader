@@ -24,7 +24,7 @@ We're not responsible for any damage caused by this package, including but not l
 - Python 3.11 or later
 - Pip
 - Some packages there
-- A enviroment variable with a Curseforge api key (name "CF_API_KEY") (i seriously need to change this to something more )
+- A enviroment variable with a Curseforge api key (name "CF_API_KEY") (i seriously need to change this to something more reliable and easier to set-up)
 
 ## How to use
 
