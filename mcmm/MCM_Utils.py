@@ -1,9 +1,9 @@
 # MCM_Utils
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from typing import Literal
 from furl import furl
 
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI
 
 class MCM_Utils:
     def __init__(self):

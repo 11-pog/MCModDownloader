@@ -24,7 +24,6 @@ We're not responsible for any damage caused by this package, including but not l
 - Python 3.11 or later
 - Pip
 - Some packages there
-- A enviroment variable with a Curseforge api key (name "CF_API_KEY") (i seriously need to change this to something more reliable and easier to set-up)
 
 ## How to use
 
@@ -32,7 +31,12 @@ We're not responsible for any damage caused by this package, including but not l
 
 - Download the tar.gz from this repo
 - Run "pip install [path to the tarball]"
-- Thats it lmao
+
+### Setting up
+
+- go to [text](https://console.curseforge.com/#%2Fapi-keys) to get a curseforge api key
+- Open your cmd, and type "mcmm -c cf-api-key --% [the key you received]"
+- As simple as that
 
 ### Usage
 

@@ -3,11 +3,15 @@
 import aiohttp
 import os
 import asyncio
+import configparser
 
 class Http404Error(Exception):
     pass
 
 class HttpError(Exception):
+    pass
+
+class InvalidKeyError(Exception):
     pass
 
 isGlobalRatelimitReset = 0
@@ -26,6 +30,8 @@ async def _get(url: str, *, headers: dict = None, params: dict = None, retries: 
                 elif response.status == 429:
                     retry_after = response.headers.get('X-Ratelimit-Reset')
                     await _handle_rate_limit_reset(retry_after)
+                elif response.status == 403:
+                    raise InvalidKeyError(f"Invalid api key")
                 elif response.status != 404:
                     raise HttpError(f"Http get error {response.status}: {response.reason}")
                 else:
@@ -40,7 +46,7 @@ async def _handle_rate_limit_reset(retry_after: int) -> bool:
     global isGlobalRatelimitReset
     if isGlobalRatelimitReset <= 0:    
         print(f'Too many requests, please wait...')
-        isGlobalRatelimitReset += 50
+        isGlobalRatelimitReset += 75
     else:
         isGlobalRatelimitReset -= 1
     if retry_after:
@@ -140,17 +146,30 @@ class ModrinthAPI:
 
 class CurseforgeAPI:
     def __init__(self, api_url="https://api.curseforge.com"):
+        
+        config = configparser.ConfigParser()
+        filePath = os.path.dirname(__file__)
+        configPath = os.path.join(filePath, "config", 'config.ini')
+        config.read(configPath)
+        
         self.api_url = api_url
-        api_key = os.environ.get('CF_API_KEY')
+        self.api_key = config['Curseforge'].get('api_key')
         self.utils = utils()
-
-        if api_key is None:
-            raise ValueError("CF_API_KEY enviroment variable is not set")
         
         self.api_headers = {
         'Accept': 'application/json',
-        'x-api-key': api_key
+        'x-api-key': self.api_key
         }
+        
+        
+        
+    async def is_key_valid(self):
+        try:
+            await _get(f"{self.api_url}/v1/games", headers=self.api_headers, retries=2)
+            return True
+        except InvalidKeyError:
+            return False
+
 
 
     async def get_project(self, url: str):

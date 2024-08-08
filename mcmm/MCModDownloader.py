@@ -1,11 +1,11 @@
 # MCModDownloader.py
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
-from mcmm.MCM_Utils import MCM_Utils
 from typing import Literal
 import os
 import asyncio
 
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
+from MCM_Utils import MCM_Utils
 
 class MCModDownloader:
     def __init__(self):
@@ -16,9 +16,11 @@ class MCModDownloader:
 
 
     async def download_latest(self, url: str, parameters: dict=None) -> tuple[str, bytes, dict, Literal['modrinth.com', 'www.curseforge.com']]:
-
         host = await self.utils.get_host(url)
         filename = metadata = files = None
+        
+        if host is None:
+            raise ValueError("Invalid URL")
         
         async def getModData(API: object):
             modData = await API.get_project(url)
@@ -47,7 +49,7 @@ class MCModDownloader:
         try:
             result, mod, metadata, host = await self.download_latest(url, params)
             await self.saveFile(mod, result, output)
-            print(f"sucessfully downloaded {result}")
+            
             
             downloadedId = (
                 {'data': metadata['modId'], 'host': host}
@@ -57,7 +59,8 @@ class MCModDownloader:
             
             if len(metadata['dependencies']) > 0:
                 dependencyId = {'data': metadata['dependencies'], 'host': host}
-            
+                
+            print(f"sucessfully downloaded {result}")            
 
         except Exception as e:
             print(f"Error downloading {url}: {e}")
@@ -79,12 +82,12 @@ class MCModDownloader:
                 
         async def _simultaneousDownloads(url, params: dict[str, str], output: str):
             failedStatus, result, dlid, dpid = await self.download_mod(url, params, output)
-            downloadedList.append(dlid)
+            
             
             if dpid:
-                dependencyList.append(dpid)
-            
+                dependencyList.append(dpid)            
             if not failedStatus:
+                downloadedList.append(dlid)
                 successfulList.append(result)
             else:
                 failedList.append(result)

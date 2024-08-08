@@ -2,23 +2,39 @@
 
 import argparse
 import asyncio
-from mcmm.MCModDownloader import MCModDownloader
-from mcmm.MCM_Utils import MCM_Utils
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
+import configparser
 import os
+
+from MCModDownloader import MCModDownloader
+from MCM_Utils import MCM_Utils
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI
+
+config = configparser.ConfigParser(allow_no_value=True)
+configPath = os.path.join(os.path.dirname(__file__), "config")
+configFile = os.path.join(configPath, 'config.ini')
+
+if not os.path.exists(configFile):    
+    os.makedirs(configPath, exist_ok=True)
+    
+    config['Curseforge'] = {'api_key': ''}
+    with open(configFile, 'w') as f:
+        config.write(f)
+        
+config.read(configFile)
 
 MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
 CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
 
-successful = []
-failed = []
-
-downloadedIdList = []
-dependencyIdList = []
-
 async def main(mainArguments):   
+    
+    successful = []
+    failed = []
+
+    downloadedIdList = []
+    dependencyIdList = []
+    
     parameters = {
         'game_versions': [mainArguments.game_version],
         'loader': mainArguments.loader,
@@ -28,12 +44,11 @@ async def main(mainArguments):
 
     if mainArguments.mod_link is not None:
         failedStatus, result, dlid, dpid = await MCMD.download_mod(mainArguments.mod_link, parameters, mainArguments.output)
-        
-        downloadedIdList.append(dlid)
-        
+             
         if dpid:
             dependencyIdList.append(dpid)        
         if not failedStatus:
+            downloadedIdList.append(dlid)
             successful.append(result)
         else:
             failed.append(result)
@@ -64,16 +79,8 @@ async def main(mainArguments):
         print("Missing Dependencies FOUND")
         print(missingDependencies)
             
-            
         txtfile = []
         tasks = []
-            
-            
-        dataTypeTable = { #might not use
-            0: ['title', 'name'],
-            1: ['', ''] 
-        }  
-            
             
         async def getName(dep: tuple[str, int]):
             name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])              
@@ -131,12 +138,14 @@ async def main(mainArguments):
 
     
 def run():
-    parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")
-
+    parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
+    
     input = parser.add_mutually_exclusive_group(required=True)
+    
     input.add_argument("-m", "--mod-link", help="Single mod download, use a link", metavar="MOD LINK")
     input.add_argument("--ml", "--mod-list", help="Download a bunch of mods simultaneously", metavar="MOD LINKS", nargs="+")
     input.add_argument("--mltxt", "--mod-list-txt", "--dltxt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
+    input.add_argument("-c", "--config", help="configurations for the lib", nargs='*')
 
     parser.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
@@ -144,9 +153,59 @@ def run():
     parser.add_argument("-d", "--dd", help="Auto downloads any missing dependencies", action="store_true")
 
     parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
-
+    
+    
+        
     try:
         args = parser.parse_args()
+        
+        if args.config is not None:
+            if len(args.config) == 0 or args.config[0] != 'cf-api-key':
+                print(
+                    "Configuration list\n"
+                    "CURSEFORGE:\n"
+                    '  "cf-api-key [key]" -> sets the curseforge api key\n'
+                    'thats it for now lmao'
+                )
+                return
+                
+            if len(args.config) < 2:
+                print('Please enter a valid key')
+                return
+                
+            config.set('Curseforge', 'api_key', args.config[1])
+                
+            with open(configFile, 'w') as file:                
+                config.write(file)
+            
+            CFAPI = CurseforgeAPI()             
+            if not asyncio.run(CFAPI.is_key_valid()):
+                print("Invalid api key")
+                return
+            
+            print(
+                "Api key set\n"
+                "You can now use the mcmm package"
+                )
+            return
+        
+    
+        if config['Curseforge']['api_key'] == '':
+            print(
+                "You do not have a Curseforge API KEY setup\n"
+                "Please run \"mcmm -c cf-api-key [your api key]\" to define a API key\n"
+                "If you do not have a API key, go to 'https://console.curseforge.com/#/api-keys' to get one"
+                )
+            return
+          
+        if not asyncio.run(CFAPI.is_key_valid()):
+            print(
+                "Invalid CurseForge api key\n"
+                "Please run \"mcmm -c cf-api-key --% [your api key]\" to define a API key\n"
+                "If you do not have a API key, go to 'https://console.curseforge.com/#/api-keys' to get one"
+                )
+            return
+        
         asyncio.run(main(args))
     except SystemExit:
         print("Invalid commands or missing required commands, use --help to see the command list")
