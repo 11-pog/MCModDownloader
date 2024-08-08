@@ -178,8 +178,8 @@ def run():
             with open(configFile, 'w') as file:                
                 config.write(file)
             
-            CFAPI = CurseforgeAPI()             
-            if not asyncio.run(CFAPI.is_key_valid()):
+            CFAPIInstance = CurseforgeAPI()             
+            if not asyncio.run(CFAPIInstance.is_key_valid()):
                 print("Invalid api key")
                 return
             
