@@ -64,4 +64,4 @@ The txts in the results folder can be:
 
 ### Copyright
 
-This shit is copyrighted by who knows and is licensed by absolutely no one lmfao
+This software is licensed under the MIT License
