@@ -1,5 +1,7 @@
 # Minecraft Mod Downloader
 
+## Note: This is still in pre-release, you might find bugs n stuff, sorry for anything
+
 A Python script to download Minecraft mods from Modrinth and Curseforge automatically.
 Supports single mod downloads, batch downloads from a list, and dependency resolution (Auto download still WIP (i dont even know if i will actually finish it lmao))
 Comes with free spaghetti code
