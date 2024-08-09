@@ -5,29 +5,41 @@ import asyncio
 import configparser
 import os
 
-from mcmm.MCModDownloader import MCModDownloader
-from mcmm.MCM_Utils import MCM_Utils
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from MCModDownloader import MCModDownloader
+from MCM_Utils import MCM_Utils
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI
 
 config = configparser.ConfigParser(allow_no_value=True)
 configPath = os.path.join(os.path.dirname(__file__), "config")
 configFile = os.path.join(configPath, 'config.ini')
 
-if not os.path.exists(configFile):    
-    os.makedirs(configPath, exist_ok=True)
-    
-    config['Curseforge'] = {'api_key': ''}
+def saveConfig():
     with open(configFile, 'w') as f:
         config.write(f)
-        
+
+if not os.path.exists(configFile):    
+    os.makedirs(configPath, exist_ok=True)
+    saveConfig()
+
 config.read(configFile)
+
+if not config.has_section('Curseforge'):
+    config.add_section('Curseforge')
+
+config['Curseforge'].setdefault('api_key', '')
+
+saveConfig()
 
 MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
 CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
 
-async def main(mainArguments):   
+async def main(mainArguments):
+    
+    if mainArguments.rd is not None:
+        print('Sorry but auto downloading dependencies is still WIP')
+        return
     
     successful = []
     failed = []
@@ -151,11 +163,12 @@ def run():
     input.add_argument("--ml", "--mod-list", help="Download a bunch of mods simultaneously", metavar="MOD LINKS", nargs="+")
     input.add_argument("--mltxt", "--mod-list-txt", "--dltxt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
     input.add_argument("-c", "--config", help="configurations for the lib", nargs='*')
-
+    input.add_argument("--rd", help="Resolve Dependencies [WIP]", nargs="*")
+    
     parser.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
     parser.add_argument("-r", "--restrict", help='Restricts mod to specific version types', choices=["Release", "Beta", "Alpha"], nargs='+')
-    parser.add_argument("-d", "--dd", help="Auto downloads the missing dependencies [WIP]", action="store_true")
+    
 
     parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
     
@@ -163,9 +176,6 @@ def run():
     
     try:
         args = parser.parse_args()
-        
-        if args.dd:
-            print('Sorry but auto downloading dependencies is still WIP')
         
         if args.config is not None:
             if len(args.config) == 0 or args.config[0] != 'cf-api-key':
@@ -216,7 +226,7 @@ def run():
         
         asyncio.run(main(args))
     except SystemExit:
-        print("Invalid commands or missing required commands, use --help to see the command list")
+        print("\nInvalid commands or missing required commands, use --help to see the command list\n")
 
 
 if __name__ == "__main__":

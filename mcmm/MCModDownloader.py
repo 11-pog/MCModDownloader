@@ -4,8 +4,8 @@ from typing import Literal
 import os
 import asyncio
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
-from mcmm.MCM_Utils import MCM_Utils
+from MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
+from MCM_Utils import MCM_Utils
 
 class MCModDownloader:
     def __init__(self):
