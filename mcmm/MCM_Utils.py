@@ -34,9 +34,16 @@ class MCM_Utils:
     
     
     async def getSpecifiedData(self, dep: tuple[str, str], dataTypes: tuple[str, str], *, prioritizeCF: bool = False) -> str | dict | list:
-        async def getData(api: object, name: str, id: str):
+        async def getData(api: object, path: str | list, id: str):
             project = await api.get_project_by_id(id, retries=20)
-            return project[name]
+            
+            if isinstance(path, list):
+                value = project
+                for key in path:
+                    value = value[key]
+                return value
+            
+            return project[path]
                 
         data = None
         if prioritizeCF and dep[1] is not None:

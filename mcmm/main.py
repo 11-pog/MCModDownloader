@@ -82,9 +82,11 @@ async def main(mainArguments):
         txtfile = []
         tasks = []
             
+            
         async def getName(dep: tuple[str, int]):
-            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])              
-            txtfile.append(name)
+            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])
+            url = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']])       
+            txtfile.append([name, url])
          
                 
         for dep in missingDependencies:
@@ -96,10 +98,13 @@ async def main(mainArguments):
                 pass #WIP PLACEHOLDER
         else:               
             dependencyPath = os.path.join(resultsPath, 'MissingDependencies.txt')           
-            txtfile.sort()
+            txtfile.sort(key=lambda x: x[0])
+            finaltxt = []
+            for txt in txtfile:
+                finaltxt.append(f"{txt[0]} [{txt[1]}]")
                 
             with open(dependencyPath, 'w') as f:
-                f.write("- " + "\n- ".join(txtfile))
+                f.write("- " + "\n- ".join(finaltxt))
 
 
     if len(dependencyIdList) > 0:
@@ -154,11 +159,13 @@ def run():
 
     parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
     
-    if args.dd:
-        print('Sorry but auto downloading dependencies is still WIP')
+    
     
     try:
         args = parser.parse_args()
+        
+        if args.dd:
+            print('Sorry but auto downloading dependencies is still WIP')
         
         if args.config is not None:
             if len(args.config) == 0 or args.config[0] != 'cf-api-key':
