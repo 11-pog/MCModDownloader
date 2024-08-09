@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import configparser
 import os
+import pickle
 
 from MCModDownloader import MCModDownloader
 from MCM_Utils import MCM_Utils
@@ -158,21 +159,23 @@ def run():
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
     
     input = parser.add_mutually_exclusive_group(required=True)
+    deps = input.add_argument_group("Dependency resolution [WIP]")
     
     input.add_argument("-m", "--mod-link", help="Single mod download, use a link", metavar="MOD LINK")
     input.add_argument("--ml", "--mod-list", help="Download a bunch of mods simultaneously", metavar="MOD LINKS", nargs="+")
     input.add_argument("--mltxt", "--mod-list-txt", "--dltxt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
     input.add_argument("-c", "--config", help="configurations for the lib", nargs='*')
-    input.add_argument("--rd", help="Resolve Dependencies [WIP]", nargs="*")
-    
+       
     parser.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
     parser.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
     parser.add_argument("-r", "--restrict", help='Restricts mod to specific version types', choices=["Release", "Beta", "Alpha"], nargs='+')
     
-
     parser.add_argument("-o", "--output", help="Output directory for the mod", default="./")
     
-    
+    # All these three are currently only placeholders and dont do anything    
+    deps.add_argument("--rd", "--resolve", help="Resolves Dependencies [WIP]", nargs="*")
+    deps.add_argument("--bl", "--blacklist", help="Auto blacklists any removed dependency for resolution (that is, this dependency will not be detected anymore)")
+    deps.add_argument("--rw", "--review", help="Opens the missing dependencies file for the user to edit and review")
     
     try:
         args = parser.parse_args()
