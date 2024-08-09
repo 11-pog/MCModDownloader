@@ -6,9 +6,9 @@ import configparser
 import os
 import pickle
 
-from MCModDownloader import MCModDownloader
-from MCM_Utils import MCM_Utils
-from MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from mcmm.MCModDownloader import MCModDownloader
+from mcmm.MCM_Utils import MCM_Utils
+from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 
 config = configparser.ConfigParser(allow_no_value=True)
 configPath = os.path.join(os.path.dirname(__file__), "config")
