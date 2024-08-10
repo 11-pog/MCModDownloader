@@ -41,24 +41,32 @@ We're not responsible for any damage caused by this package, including but not l
 
 ### Usage
 
+General usage: Use "mcmm" as a prefix to run a command, then add the arguments (e.g: -m [mod link], -g 1.20.1, etc)
+
 #### Basic downloads
 
 - Open the cmd/powershell in the directory you want to output the files
-- Type "mcmm -m [Mod Link]" for basic, single mod download
-- Type "mcmm --ml [Link1, Link2, ...]" for multiple downloads
-- Type "mcmm --dltxt [Path to the txt]" to download multiple mods at the same time using a txt file with a single mod url per line
+- Type "mcmm -m [Mod Link] [other parameters]" for basic, single mod download from a url
+- Type "mcmm -ml [Link1, Link2, ...] [other parameters]" for multiple downloads, separating each url with a space
+- Type "mcmm -mlt [Path to the txt] [other parameters]" to download multiple mods at the same time using a txt file with a single mod url per line
 
-#### Some parameters to get the right mods
+#### Mod Filtering Parameters
 
 - "-g [game version]" to specify a game version
 - "-l [mod loaders]" to specify a single or multiple mod loaders (defaults to forge and neoforge)
-- "-r [version type]" to specify the type of version to the mod (Release, Beta, Alpha)(Might not work with curseforge links)(Some mods only have beta or alphas, so it is not recommended to add this)
+- "-r [version type]" **DEPRECATED:** to specify the type of version to the mod (Release, Beta, Alpha). Note that this parameter is broken and may not work with CurseForge links.
 
-#### Some extra parameters
+#### Some extra commands
 
-- "-d" does nothing, supposed to auto download any dependency if it exists, however currently does nothing
 - "-o" optional output directory, always defaults to the folder you're in
-- "-c" configs, only has "cf-api-key" yet
+- "-c" set configurations, only has "cf-api-key" yet
+- "-h" or "--help" prints all commands with a detailed description (and aliases/long versions)
+
+#### **WIP:** Dependency resolution (This is a placeholder, none of these do anything yet)
+
+- "-rd" **Not implemented:** Attempts to resolve any cached missing dependencies.
+- "-bl" **Not implemented:** Automatically blacklists any dependencies removed by -rw
+- "-rw" **Not implemented:** Opens the missing dependencies file for manual review and editing
 
 ### Output
 
