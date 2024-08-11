@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     
 setuptools.setup(
     name="mcmm",
-    version="1.0.dev2",
+    version="1.0.dev3",
     author="OpinionThief",
     author_email="alvessamuel872@gmail.com",
     description="A package to download Minecraft mods from Modrinth and Curseforge, comes with free spaghetti (code)",
@@ -13,6 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/11-pog/MCModDownloader",
     packages=setuptools.find_packages(),
+    license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
