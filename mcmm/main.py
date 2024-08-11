@@ -5,7 +5,7 @@ import asyncio
 import configparser
 import os
 import sys
-import pickle
+import json
 
 from mcmm.MCModDownloader import MCModDownloader
 from mcmm.MCM_Utils import MCM_Utils
@@ -36,6 +36,7 @@ MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
 CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
+
 
 async def main(mainArguments: argparse.Namespace) -> None:    
     successful = []
@@ -151,6 +152,10 @@ async def main(mainArguments: argparse.Namespace) -> None:
 
 
 
+def dependencyResolve(args):
+    pass
+
+
 def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
     
@@ -159,8 +164,7 @@ def get_arguments() -> argparse.Namespace:
     input.add_argument("-m", "--mod-link", help="Single mod download, use a link", metavar="MOD LINK")
     input.add_argument("-ml", "--mod-list", help="Download a bunch of mods simultaneously", metavar="MOD LINKS", nargs="+")
     input.add_argument("-mlt", "--mod-list-txt", "-dlt", help="Download the mods from a txt file containing one mod link per line", metavar="TXT FILE")
-    
-    
+        
     # Mod fetching parameters
     mod_group = parser.add_argument_group(title="Mod filtering parameters", description="Parameters to help fetch specific mod versions")
     mod_group.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
