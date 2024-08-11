@@ -12,9 +12,23 @@ class MCM_Utils:
 
 
 
-    async def get_equivalent_ids(self, id: str | int, host: Literal['modrinth.com', 'www.curseforge.com']) -> tuple[str, int]:
+    async def get_equivalent_ids(self, id: dict) -> tuple[str, int]:
         CFId = MDId = None
-
+        
+        if id.get('modId') is not None:
+            CFId = id['modId']
+            project = await self.curseforge_api.get_project_by_id(CFId)
+            if project.get('slug'):
+                mdProject = await self.modrinth_api.get_project_by_id(project['slug'])
+                if mdProject is not None:
+                    MDId = mdProject['id']
+        else:
+            MDId = id['project_id']
+            project = await self.modrinth_api.get_project_by_id(MDId)
+            if project.get('slug'):
+                CFId = await self.curseforge_api.get_id_by_slug(project['slug'])
+                
+        """
         match host:
             case "modrinth.com":   
                 MDId = id['project_id']
@@ -28,9 +42,10 @@ class MCM_Utils:
                     mdProject = await self.modrinth_api.get_project_by_id(project['slug'])
                     if mdProject is not None:
                         MDId = mdProject['id']
+        """
+                        
         print(f"Equivalent ID's: {MDId}, {CFId}")
-        return [MDId, CFId]
-    
+        return MDId, CFId
     
     
     async def getSpecifiedData(self, dep: tuple[str, str], dataTypes: tuple[str, str], *, prioritizeCF: bool = False) -> str | dict | list:
@@ -46,14 +61,18 @@ class MCM_Utils:
             return project[path]
                 
         data = None
+        hostid = 0
+        
         if prioritizeCF and dep[1] is not None:
             data = await getData(self.curseforge_api, dataTypes[1], dep[1])
+            hostid = 1
         elif dep[0] is not None:
             data = await getData(self.modrinth_api, dataTypes[0], dep[0])
         else:
             data = await getData(self.curseforge_api, dataTypes[1], dep[1])
+            hostid = 1
             
-        return data
+        return data, hostid
     
     
     

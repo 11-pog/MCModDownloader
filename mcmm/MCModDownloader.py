@@ -4,7 +4,7 @@ from typing import Literal
 import os
 import asyncio
 
-from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI, utils
+from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from mcmm.MCM_Utils import MCM_Utils
 
 class MCModDownloader:
@@ -49,8 +49,7 @@ class MCModDownloader:
         try:
             result, mod, metadata, host = await self.download_latest(url, params)
             await self.saveFile(mod, result, output)
-            
-            
+                        
             downloadedId = (
                 {'data': metadata['modId'], 'host': host}
                 if host == "www.curseforge.com" else

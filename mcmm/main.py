@@ -86,35 +86,37 @@ async def main(mainArguments: argparse.Namespace) -> None:
 
 
     async def dependencyHandler(missingDependencies: list[tuple[str, str]]) -> None:
-        print("Missing Dependencies FOUND")
-        print(missingDependencies)
+        print("""
+Missing Dependencies FOUND
+MissingDependencies.txt created
+
+Make sure to check the detected missing dependencies before trying to resolve [WIP]
+""")
             
         txtfile = []
         tasks = []
-            
-            
+                        
         async def getName(dep: tuple[str, int]):
             name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])
-            url = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']])       
-            txtfile.append([name, url])
+            url, hostid = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']])       
+            txtfile.append((name, (url, hostid)))
          
                 
         for dep in missingDependencies:
             tasks.append(getName(dep))
                 
         await asyncio.gather(*tasks)
-                           
-        if mainArguments.dd:
-                pass #WIP PLACEHOLDER
-        else:               
-            dependencyPath = os.path.join(resultsPath, 'MissingDependencies.txt')           
-            txtfile.sort(key=lambda x: x[0])
-            finaltxt = []
-            for txt in txtfile:
-                finaltxt.append(f"{txt[0]} [{txt[1]}]")
+                                        
+        dependencyPath = os.path.join(resultsPath, 'MissingDependencies.txt')           
+        txtfile.sort(key=lambda x: x[0])
+        finaltxt = []
+        
+        for txt in txtfile:
+            url = txt[1][0] if txt[1][1] == 1 else f"https://modrinth.com/mod/{txt[1][0]}"
+            finaltxt.append(f"{txt[0][0 ]} [{url}]")
                 
-            with open(dependencyPath, 'w') as f:
-                f.write("- " + "\n- ".join(finaltxt))
+        with open(dependencyPath, 'w') as f:
+            f.write("- " + "\n- ".join(finaltxt))
 
 
     if len(dependencyIdList) > 0:
@@ -129,16 +131,16 @@ async def main(mainArguments: argparse.Namespace) -> None:
                 (dep['host'] == 'modrinth.com' and data['dependency_type'] == 'required')) and
                 tuple(sorted(data.items())) + (dep['host'],) not in seen and not seen.add(tuple(sorted(data.items())) + (dep['host'],))
         ]
-
+        
         equivalentDependencyIds = []
 
-        async def dependencyAppendId(data, host):
-            ids = await MCUtils.get_equivalent_ids(data, host)
+        async def dependencyAppendId(data):
+            ids = await MCUtils.get_equivalent_ids(data)
             equivalentDependencyIds.append(ids)
 
         tasks = []
-        for data, host in requiredDependencies:
-            tasks.append(dependencyAppendId(data, host))
+        for data, _ in requiredDependencies:
+            tasks.append(dependencyAppendId(data))
         
         await asyncio.gather(*tasks)
 
@@ -156,7 +158,7 @@ def dependencyResolve(args):
     pass
 
 
-def get_arguments() -> argparse.Namespace:
+def get_arguments() -> tuple[argparse.Namespace, int]:
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
     
     input = parser.add_mutually_exclusive_group()
