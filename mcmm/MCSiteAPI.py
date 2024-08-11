@@ -18,8 +18,8 @@ isGlobalRatelimitReset = 0
 
 async def _get(url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
     attempt = 0
-    while attempt < retries:
-        async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
+        while attempt < retries:        
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     retry_after = response.headers.get('X-Ratelimit-Reset')
@@ -36,7 +36,7 @@ async def _get(url: str, *, headers: dict = None, params: dict = None, retries: 
                     raise HttpError(f"Http get error {response.status}: {response.reason}")
                 else:
                     attempt += 1
-        await asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)
                 
     raise Http404Error()
 
