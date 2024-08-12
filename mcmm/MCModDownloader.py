@@ -3,6 +3,7 @@
 from typing import Literal
 import os
 import asyncio
+import re
 
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from mcmm.MCM_Utils import MCM_Utils
@@ -37,8 +38,10 @@ class MCModDownloader:
                 modData, metadata, files = await getModData(self.curseforge_api)
                 filename = f"{modData['name']}_{metadata['id']}.jar"
         
-                
-        filename = filename.replace(" ", "").replace(":","")
+        
+        filename = re.sub(r'[ ]', '', filename)
+        filename = re.sub(r'[;:\,=<>*%?\\|\/]+', '-', filename)
+        
         return filename, files, metadata, host
 
 
