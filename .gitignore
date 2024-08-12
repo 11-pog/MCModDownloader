@@ -13,7 +13,7 @@
 /dist
 
 #Config changes depending on the user
-/mcmm/config/config.ini
+/mcmm/config/
 
 #Decided to hardcode requirements as there are just a few, sorry
 /requirements.txt

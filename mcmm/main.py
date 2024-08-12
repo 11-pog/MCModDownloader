@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import configparser
+import subprocess
 import os
 import sys
 import json
@@ -14,14 +15,59 @@ from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 config = configparser.ConfigParser(allow_no_value=True)
 configPath = os.path.join(os.path.dirname(__file__), "config")
 configFile = os.path.join(configPath, 'config.ini')
+cacheFile = os.path.join(configPath, 'MCMM_Cache.json')
 
+def cache(key:str, value:any=None) -> dict|None:
+    """Simple cache function, caches the data in value to the specified key, return the key data if key is None.
+
+    Args:
+        key (str): the specified json key.
+        value (any, optional): Value to write to the key. Returns the key value if None. Defaults to None.
+
+    Returns:
+        dict|None: The value of the specified key, None if writing.
+    """
+    
+    if value is None:        
+        with open(cacheFile, 'r') as f:
+            data = json.load(f)
+            return data.get(key)
+        
+    with open(cacheFile, 'r+') as f:
+            data = json.load(f)
+            data[key] = value
+            f.seek(0)
+            json.dump(data, f)
+            f.truncate()
+        
 def saveConfig():
+    """Saves the current loaded config into the config.ini file.
+    """
     with open(configFile, 'w') as f:
         config.write(f)
 
-if not os.path.exists(configFile):    
-    os.makedirs(configPath, exist_ok=True)
+def open_file_and_wait(path: str):
+    """Generic open txt file and wait until its closed function.
+    Uses notepad.
+
+    Args:
+        path (str): Path to the file to be opened
+    """
+    if os.name == 'nt':
+        subprocess.Popen(['notepad.exe', path]).communicate()
+        
+    elif os.name == 'posix':
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.Popen([opener, path]).communicate()
+
+os.makedirs(configPath, exist_ok=True)
+
+if not os.path.exists(configFile):
     saveConfig()
+    
+if not os.path.exists(cacheFile):
+    with open(cacheFile, 'w') as f:
+        json.dump({}, f)
 
 config.read(configFile)
 
@@ -38,7 +84,12 @@ CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
 
 
-async def main(mainArguments: argparse.Namespace) -> None:    
+async def main(mainArguments: argparse.Namespace) -> None:
+    """Main entry point
+
+    Args:
+        mainArguments (argparse.Namespace): Parsed arguments
+    """
     successful = []
     failed = []
 
@@ -90,7 +141,8 @@ async def main(mainArguments: argparse.Namespace) -> None:
 Missing Dependencies FOUND
 MissingDependencies.txt created
 
-Make sure to check the detected missing dependencies before trying to resolve [WIP]
+Run mcmm -rw to open the file and edit it if necessary.
+Make sure to check the detected missing dependencies before trying to resolve. [WIP]
 """)
             
         txtfile = []
@@ -117,6 +169,9 @@ Make sure to check the detected missing dependencies before trying to resolve [W
                 
         with open(dependencyPath, 'w') as f:
             f.write("- " + "\n- ".join(finaltxt))
+            
+        absDependencyPath = os.path.abspath(dependencyPath)
+        cache('DEPENDENCY_PATH', absDependencyPath)
 
 
     if len(dependencyIdList) > 0:
@@ -154,8 +209,19 @@ Make sure to check the detected missing dependencies before trying to resolve [W
 
 
 
-def dependencyResolve(args):
-    pass
+def dependencyResolve(args): #WIP
+    if args.review == True:
+        dependencyPath = cache('DEPENDENCY_PATH')
+        
+        if dependencyPath is not None:
+            print("Opening file, close the file to continue...")
+            open_file_and_wait(dependencyPath)
+        else:
+            print("There are no cached dependencies to be resolved")
+            
+        print('Done!')
+        return
+
 
 
 def get_arguments() -> tuple[argparse.Namespace, int]:
@@ -179,7 +245,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     extra_group.add_argument("-c", "--config", help="configurations for this package", nargs='*')
     
     # WIP: Dependency resolution commands - Currently dont do anything     
-    dep_group = parser.add_argument_group(title="Dependency resolution [WIP]", description="Commands to help manage and resolve missing dependencies, Currently does nothing as its still wip")   
+    dep_group = parser.add_argument_group(title="Dependency resolution", description="WIP: Commands to help manage and resolve missing dependencies")   
      
     dep_group.add_argument("-rd", "--resolve",
                            help="Not implemented: Attempts to resolve any cached missing dependencies. Before using this command, it's recommended to run `--review` to verify the dependencies, as some mods may report false positives.",
@@ -190,7 +256,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
                            action="store_true")
     
     dep_group.add_argument("-rw", "--review",
-                           help="Not implemented: Opens the missing dependencies file for manual review and editing. This allows you to verify and correct any dependencies before attempting to resolve them.",
+                           help="Opens the missing dependencies file for manual review and editing. This allows you to verify and correct any dependencies before attempting to resolve them.",
                            action="store_true")
     
     try:
@@ -216,8 +282,8 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
 def run():        
     args, call_type = get_arguments()
         
-    if call_type == 1: # As dr is still wip, once it gets released this will probably change
-        print("Sorry, dependency resolution is currently WIP and does not do anything yet.")
+    if call_type == 1:
+        dependencyResolve(args)
         return
     
     if call_type == 2:

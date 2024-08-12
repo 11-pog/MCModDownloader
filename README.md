@@ -62,11 +62,11 @@ General usage: Use "mcmm" as a prefix to run a command, then add the arguments (
 - "-c" set configurations, only has "cf-api-key" yet
 - "-h" or "--help" prints all commands with a detailed description (and aliases/long versions)
 
-#### **WIP:** Dependency resolution (This is a placeholder, none of these do anything yet)
+#### **WIP:** Dependency resolution
 
 - "-rd" **Not implemented:** Attempts to resolve any cached missing dependencies.
 - "-bl" **Not implemented:** Automatically blacklists any dependencies removed by -rw
-- "-rw" **Not implemented:** Opens the missing dependencies file for manual review and editing
+- "-rw" **Implemented:** Opens the missing dependencies file for manual review and editing
 
 ### Output
 
