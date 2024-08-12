@@ -31,12 +31,14 @@ class MCModDownloader:
         match host:
             case "modrinth.com":
                 modData, metadata, files = await getModData(self.modrinth_api)
-                filename = f"{modData['slug']}_{metadata['version_number']}.jar"  
+                filename = f"{modData['title']}_{metadata['version_number']}.jar" 
             
             case "www.curseforge.com":
                 modData, metadata, files = await getModData(self.curseforge_api)
-                filename = f"{modData['slug']}_{metadata['id']}.jar"
-
+                filename = f"{modData['name']}_{metadata['id']}.jar"
+        
+                
+        filename = filename.replace(" ", "").replace(":","")
         return filename, files, metadata, host
 
 
