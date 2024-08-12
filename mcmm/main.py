@@ -81,7 +81,7 @@ async def main(mainArguments: argparse.Namespace) -> None:
 
     if len(failed) > 0:
         failedPath = os.path.join(resultsPath, 'Failed_downloads.txt')
-        with open(failedPath, 'w') as f:
+        with open(failedPath, 'w', encoding='utf-8') as f:
             f.write('\n'.join(failed))
 
 
@@ -115,7 +115,7 @@ Make sure to check the detected missing dependencies before trying to resolve [W
             url = txt[1][0] if txt[1][1] == 1 else f"https://modrinth.com/mod/{txt[1][0]}"
             finaltxt.append(f"{txt[0][0 ]} [{url}]")
                 
-        with open(dependencyPath, 'w') as f:
+        with open(dependencyPath, 'w', encoding='utf-8') as f:
             f.write("- " + "\n- ".join(finaltxt))
 
 
