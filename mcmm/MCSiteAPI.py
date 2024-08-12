@@ -14,60 +14,7 @@ class HttpError(Exception):
 class InvalidKeyError(Exception):
     pass
 
-isGlobalRatelimitReset = 0
-
-async def _get(url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
-    attempt = 0
-    async with aiohttp.ClientSession() as session:
-        while attempt < retries:        
-            async with session.get(url, headers=headers, params=params) as response:
-                if response.status == 200:
-                    retry_after = response.headers.get('X-Ratelimit-Reset')
-                    if 'application/json' in response.headers.get('Content-Type', ''):
-                        return await response.json()
-                    else:
-                        return await response.text()
-                elif response.status == 429:
-                    retry_after = response.headers.get('X-Ratelimit-Reset')
-                    await _handle_rate_limit_reset(retry_after)
-                elif response.status == 403:
-                    raise InvalidKeyError(f"Invalid api key")
-                elif response.status != 404:
-                    raise HttpError(f"Http get error {response.status}: {response.reason}")
-                else:
-                    attempt += 1
-            await asyncio.sleep(0.5)
-                
-    raise Http404Error()
-
-
-
-async def _handle_rate_limit_reset(retry_after: int) -> bool:
-    global isGlobalRatelimitReset
-    if isGlobalRatelimitReset <= 0:    
-        print(f'Too many requests, please wait...')
-        isGlobalRatelimitReset += 75
-    else:
-        isGlobalRatelimitReset -= 1
-    if retry_after:
-        await asyncio.sleep(int(retry_after) + 5)
-
-
-
-async def _Dl_Data(url: str) -> bytes:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
-            if response.status == 200:
-                return await response.read()
-            else:
-                raise Exception(f"Http get error {response.status}: {response.reason}")
-
-
-
-async def _format_query(query: str):
-    formattedQuery = [f'"{x}"' for x in query]
-    return ','.join(formattedQuery)
-
+isGlobalRLMessageReset = 0
 
 class ModrinthAPI:
     def __init__(self, api_url="https://api.modrinth.com"):
@@ -76,14 +23,14 @@ class ModrinthAPI:
   
 
     async def get_project(self, url: str):
-        response = await _get(f"{self.api_url}/v2/project/{self.utils.get_slug_by_url(url)}")
+        response = await self.utils.get(f"{self.api_url}/v2/project/{self.utils.get_slug_by_url(url)}")
         return response
 
 
 
     async def get_project_by_id(self, id: str, *, retries: int = 7):
         try:
-            response = await _get(f"{self.api_url}/v2/project/{id}", retries=retries)
+            response = await self.utils.get(f"{self.api_url}/v2/project/{id}", retries=retries)
             return response
         except Http404Error:
             return None
@@ -91,7 +38,7 @@ class ModrinthAPI:
 
 
     async def get_version(self, version_id: str):
-        response = await _get(f"{self.api_url}/v2/version/{version_id}")
+        response = await self.utils.get(f"{self.api_url}/v2/version/{version_id}")
         return response
     
 
@@ -104,19 +51,19 @@ class ModrinthAPI:
 
             version = parameters.get('game_versions')
             if version:
-                queryParams.append(f"game_versions=[{await _format_query(version)}]")
+                queryParams.append(f"game_versions=[{await self.utils.format_query(version)}]")
 
             loader = parameters.get('loader')
             if loader:
-                queryParams.append(f"loaders=[{await _format_query(loader)}]")
+                queryParams.append(f"loaders=[{await self.utils.format_query(loader)}]")
             
             type = parameters.get('version_type')
             if type:
-                queryParams.append(f"version_type=[{await _format_query(type)}]")
+                queryParams.append(f"version_type=[{await self.utils.format_query(type)}]")
 
             query += '?' + '&'.join(queryParams)
             
-        fetchResult = await _get(query)
+        fetchResult = await self.utils.get(query)
         response = sorted(fetchResult, key=lambda x: x['date_published'], reverse=True)
         return response
     
@@ -136,7 +83,7 @@ class ModrinthAPI:
         version = versionList[0]
 
         fileUrl = version['files'][0]['url']
-        response = await _Dl_Data(fileUrl)
+        response = await self.utils.Dl_Data(fileUrl)
         return version, response
 
     
@@ -165,7 +112,7 @@ class CurseforgeAPI:
         
     async def is_key_valid(self):
         try:
-            await _get(f"{self.api_url}/v1/games", headers=self.api_headers, retries=2)
+            await self.utils.get(f"{self.api_url}/v1/games", headers=self.api_headers, retries=2)
             return True
         except InvalidKeyError:
             return False
@@ -179,7 +126,7 @@ class CurseforgeAPI:
 
 
     async def get_project_by_id(self, id: int, *, retries: int=7):
-        response = await _get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers, retries=retries)
+        response = await self.utils.get(f"{self.api_url}/v1/mods/{id}", headers=self.api_headers, retries=retries)
         return response['data']
 
 
@@ -191,7 +138,7 @@ class CurseforgeAPI:
 
 
     async def get_id_by_slug(self, slug: str):
-        data = await _get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
+        data = await self.utils.get(f'{self.api_url}/v1/mods/search', headers=self.api_headers, params={
             'slug': slug,
             'classId': '6',
             'gameId': '432'
@@ -250,11 +197,11 @@ class CurseforgeAPI:
                 finalParamList[0]['modLoaderType'] = loaders.pop()
                     
             for parameter in finalParamList:
-                files = await _get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers, params=parameter)
+                files = await self.utils.get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers, params=parameter)
                 finalFiles += files['data']
             
         else:        
-            files = await _get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers)
+            files = await self.utils.get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers)
             finalFiles += files['data']
 
         result = sorted(finalFiles, key=lambda x: x['fileDate'], reverse=True)
@@ -275,13 +222,15 @@ class CurseforgeAPI:
         file = fileList[0]
 
         fileUrl = file['downloadUrl']
-        response = await _Dl_Data(fileUrl)
+        response = await self.utils.Dl_Data(fileUrl)
         return file, response
     
 
 class utils:
     def __init__(self):
         pass
+    
+    
     
     def get_slug_by_url(self, url: str):
         splitUrl = url.split('/')
@@ -293,8 +242,53 @@ class utils:
         
         
         
-if __name__ == '__main__':
-    api = ModrinthAPI()
-    test = asyncio.run(api.get_project('https://modrinth.com/mod/fabric-api'))
-        
-        
+    async def get(self, url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
+        attempt = 0
+        async with aiohttp.ClientSession() as session:
+            while attempt < retries:        
+                async with session.get(url, headers=headers, params=params) as response:
+                    if response.status == 200:
+                        retry_after = response.headers.get('X-Ratelimit-Reset')
+                        if 'application/json' in response.headers.get('Content-Type', ''):
+                            return await response.json()
+                        else:
+                            return await response.text()
+                    elif response.status == 429:
+                        retry_after = response.headers.get('X-Ratelimit-Reset')
+                        await self.handle_rate_limit_reset(retry_after)
+                    elif response.status == 403:
+                        raise InvalidKeyError(f"Invalid api key")
+                    elif response.status != 404:
+                        raise HttpError(f"Http get error {response.status}: {response.reason}")
+                    else:
+                        attempt += 1
+                await asyncio.sleep(0.5)                   
+        raise Http404Error()
+
+
+
+    async def handle_rate_limit_reset(self, retry_after: int) -> bool:
+        global isGlobalRLMessageReset
+        if isGlobalRLMessageReset <= 0:    
+            print(f'Too many requests, please wait...')
+            isGlobalRLMessageReset += 60
+        else:
+            isGlobalRLMessageReset -= 1
+        if retry_after:
+            await asyncio.sleep(int(retry_after) + 5)
+
+
+
+    async def Dl_Data(self, url: str) -> bytes:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
+                if response.status == 200:
+                    return await response.read()
+                else:
+                    raise Exception(f"Http get error {response.status}: {response.reason}")
+
+
+
+    async def format_query(self, query: str):
+        formattedQuery = [f'"{x}"' for x in query]
+        return ','.join(formattedQuery)
