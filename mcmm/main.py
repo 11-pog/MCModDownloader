@@ -75,7 +75,7 @@ async def main(mainArguments: argparse.Namespace) -> None:
     if len(successful) > 0:
         successfulPath = os.path.join(resultsPath, 'Successful_downloads.txt')
         successful.sort()
-        with open(successfulPath, 'w') as f:
+        with open(successfulPath, 'w', encoding='utf-8') as f:
             f.write('- ' + '\n- '.join(successful))
 
 
