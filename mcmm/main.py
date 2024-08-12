@@ -47,8 +47,7 @@ def saveConfig():
         config.write(f)
 
 def open_file_and_wait(path: str):
-    """Generic open txt file and wait until its closed function.
-    Uses notepad.
+    """Generic open txt file and wait until its closed function. Uses notepad.
 
     Args:
         path (str): Path to the file to be opened
@@ -213,14 +212,13 @@ def dependencyResolve(args): #WIP
     if args.review == True:
         dependencyPath = cache('DEPENDENCY_PATH')
         
-        if dependencyPath is not None:
-            print("Opening file, close the file to continue...")
-            open_file_and_wait(dependencyPath)
-        else:
+        if dependencyPath is None:
             print("There are no cached dependencies to be resolved")
-            
+            return
+                        
+        print("Opening file, close the file to continue...")
+        open_file_and_wait(dependencyPath)                  
         print('Done!')
-        return
 
 
 
