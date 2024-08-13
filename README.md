@@ -58,8 +58,8 @@ General usage: Use "mcmm" as a prefix to run a command, then add the arguments (
 
 #### Some extra commands
 
-- "-o" optional output directory, always defaults to the folder you're in
-- "-c" set configurations, only has "cf-api-key" yet
+- "-o" optional output directory, default can be configured in '--configs'
+- "-c" set configurations, refer to configs for more info
 - "-h" or "--help" prints all commands with a detailed description (and aliases/long versions)
 
 #### **WIP:** Dependency resolution
@@ -67,6 +67,13 @@ General usage: Use "mcmm" as a prefix to run a command, then add the arguments (
 - "-rd" **Not implemented:** Attempts to resolve any cached missing dependencies.
 - "-bl" **Not implemented:** Automatically blacklists any dependencies removed by -rw
 - "-rw" **Implemented:** Opens the missing dependencies file for manual review and editing
+
+### Configs
+
+Here are the configurations (-c) currently implemented:
+
+- cf-api-key [Api key] -> configures the curseforge api key
+- default-output-dir [directory path] -> Sets the default output directory when the -o parameter is not specified. You can enter a valid directory path, 'cwd' to set the current working directory as the default, or './' to always use the current working directory as the output directory, which will update dynamically
 
 ### Output
 

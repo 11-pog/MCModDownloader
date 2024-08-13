@@ -1,5 +1,6 @@
 # main.py
 
+# General Imports
 import argparse
 import asyncio
 import configparser
@@ -8,14 +9,21 @@ import os
 import sys
 import json
 
+
+# Imports custom classes
 from mcmm.MCModDownloader import MCModDownloader
 from mcmm.MCM_Utils import MCM_Utils
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 
-config = configparser.ConfigParser(allow_no_value=True)
-configPath = os.path.join(os.path.dirname(__file__), "config")
-configFile = os.path.join(configPath, 'config.ini')
-cacheFile = os.path.join(configPath, 'MCMM_Cache.json')
+
+# Sets up configparser object and paths 
+config = configparser.ConfigParser(allow_no_value=True) # Configparses object
+configPath = os.path.join(os.path.dirname(__file__), "config") # Configs dir path
+
+configFile = os.path.join(configPath, 'config.ini') # Config.ini path
+cacheFile = os.path.join(configPath, 'MCMM_Cache.json') # MCMM_Cache.json path
+
+
 
 def cache(key:str, value:any=None) -> dict|None:
     """Simple cache function, caches the data in value to the specified key, return the key data if key is None.
@@ -40,11 +48,29 @@ def cache(key:str, value:any=None) -> dict|None:
             json.dump(data, f)
             f.truncate()
         
+        
+        
 def saveConfig():
     """Saves the current loaded config into the config.ini file.
     """
     with open(configFile, 'w') as f:
         config.write(f)
+
+
+
+def setConfig(section: str, option: str, value: any):
+    config.set(section, option, value)
+    saveConfig()
+
+
+
+def get_element(input: list, index: int):
+    if 0 <= index < len(input):
+        return input[index]
+    else:
+        return None
+
+
 
 def open_file_and_wait(path: str):
     """Generic open txt file and wait until its closed function. Uses notepad.
@@ -59,6 +85,9 @@ def open_file_and_wait(path: str):
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.Popen([opener, path]).communicate()
 
+
+
+# Creating the files if they dont exist
 os.makedirs(configPath, exist_ok=True)
 
 if not os.path.exists(configFile):
@@ -68,19 +97,29 @@ if not os.path.exists(cacheFile):
     with open(cacheFile, 'w') as f:
         json.dump({}, f)
 
+
+
+# Setting up the config.ini file
 config.read(configFile)
 
-if not config.has_section('Curseforge'):
-    config.add_section('Curseforge')
+sections = ['Curseforge', 'General']
+
+for section in sections:
+    if not config.has_section(section):
+        config.add_section(section)
 
 config['Curseforge'].setdefault('api_key', '')
+config['General'].setdefault('default_output_dir', './')
 
 saveConfig()
 
+
+# Creating Class instances
 MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
 CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
+
 
 
 async def main(mainArguments: argparse.Namespace) -> None:
@@ -224,6 +263,7 @@ def dependencyResolve(args): #WIP
 
 def get_arguments() -> tuple[argparse.Namespace, int]:
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
+    defaultOutput = config["General"]['default_output_dir']
     
     input = parser.add_mutually_exclusive_group()
         
@@ -239,7 +279,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     
     # Extra parameters
     extra_group = parser.add_argument_group(title="Extra commands", description="Extra commands for this package")
-    extra_group.add_argument("-o", "--output", help="Output directory for the mod", default="./")
+    extra_group.add_argument("-o", "--output", help=f"Output directory for the mod, current default = '{defaultOutput}'. use -c default-output-dir to set or change this", default=defaultOutput)
     extra_group.add_argument("-c", "--config", help="configurations for this package", nargs='*')
     
     # WIP: Dependency resolution commands - Currently dont do anything     
@@ -275,7 +315,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
                         
         sys.exit(e.code)
 
-    
+
     
 def run():        
     args, call_type = get_arguments()
@@ -284,33 +324,14 @@ def run():
         dependencyResolve(args)
         return
     
-    if call_type == 2:
-        if len(args.config) == 0 or args.config[0] != 'cf-api-key':
-            print(
-                "Configuration list\n"
-                "CURSEFORGE:\n"
-                '  "cf-api-key [key]" -> sets the curseforge api key\n'
-                'thats it for now lmao'
-            )
-            return
-                
-        if len(args.config) < 2:
-            print('Please enter a valid key')
-            return
-                
-        config.set('Curseforge', 'api_key', args.config[1])                
-        saveConfig()
-            
-        CFAPIInstance = CurseforgeAPI()             
-        if not asyncio.run(CFAPIInstance.is_key_valid()):
-            print("Invalid api key")
-            return
-            
-        print(
-            "Api key set\n"
-            "You can now use the mcmm package"
-            )
-        return
+    if call_type == 2:        
+        key = get_element(args.config, 0)
+        value = get_element(args.config, 1)
+        
+        try:
+            configure(key, value)
+        except ValueError:
+            sys.exit(0)
         
     
     if config['Curseforge']['api_key'] == '':
@@ -337,6 +358,60 @@ def run():
         
     asyncio.run(main(args))
 
+
+
+def configure(key: str|None, value: str|int|None):
+    def check_value():
+        if value is None:
+            print(f'Please enter a valid value for {key}')
+            raise ValueError()
+           
+            
+    match key:
+        case "cf-api-key":
+            check_value()    
+                                        
+            config.set('Curseforge', 'api_key', value)                
+            saveConfig()
+                    
+            CFAPIInstance = CurseforgeAPI()             
+            if not asyncio.run(CFAPIInstance.is_key_valid()):
+                print("Invalid api key")
+                return
+                    
+            print(
+                "Api key set\n"
+                "You can now use the mcmm package"
+                )            
+        
+        case 'default-output-dir':
+            check_value()
+            
+            match value:               
+                case 'cwd':
+                    path = os.path.abspath('./')
+                    setConfig('General', 'default_output_dir', path)
+                    print(f"The default output is now set to the current working directory: {path}")
+                case str():
+                    if os.path.exists(value):
+                        setConfig('General', 'default_output_dir', value)
+                        print(f"The default output is now set to {value}")
+                    else:
+                        print(f"Invalid path: {value}")
+                        raise ValueError
+                
+        case _:        
+            print(f"""
+Configuration list:
+    Curseforge:
+            "cf-api-key [key]" -> sets the curseforge api key
+    General:
+            "default-output-dir [path]" = '{config['General'].get('default_output_dir')}' -> the default output directory for downloads.
+                [path] can be either an valid path or 'cwd' to set to the current working directory
+    thats it for now lmao               
+""" )
+    sys.exit(0)   
+    
 
 
 if __name__ == "__main__":
