@@ -48,7 +48,7 @@ class MCM_Utils:
         return MDId, CFId
     
     
-    async def getSpecifiedData(self, dep: tuple[str, str], dataTypes: tuple[str, str], *, prioritizeCF: bool = False) -> str | dict | list:
+    async def getSpecifiedData(self, dep: tuple[str, str], dataTypes: tuple[str, str], *, prioritizeCF: bool = False) -> tuple[str | dict | list, int]:
         async def getData(api: object, path: str | list, id: str):
             project = await api.get_project_by_id(id, retries=20)
             

@@ -102,7 +102,7 @@ if not os.path.exists(cacheFile):
 # Setting up the config.ini file
 config.read(configFile)
 
-sections = ['Curseforge', 'General']
+sections = ['Curseforge', 'General', 'Other']
 
 for section in sections:
     if not config.has_section(section):
@@ -110,6 +110,7 @@ for section in sections:
 
 config['Curseforge'].setdefault('api_key', '')
 config['General'].setdefault('default_output_dir', './')
+config['Other'].setdefault('prioritize_CF', 'False')
 
 saveConfig()
 
@@ -185,10 +186,12 @@ Make sure to check the detected missing dependencies before trying to resolve. [
             
         txtfile = []
         tasks = []
+        
+        prioritize_cf = config['Other']['prioritize_cf'] == 'True'
                         
         async def getName(dep: tuple[str, int]):
-            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])
-            url, hostid = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']])       
+            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'], prioritizeCF=prioritize_cf)
+            url, hostid = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']], prioritizeCF=prioritize_cf)       
             txtfile.append((name, (url, hostid)))
          
                 
@@ -389,29 +392,70 @@ def configure(key: str|None, value: str|int|None):
             
             match value:               
                 case 'cwd':
-                    path = os.path.abspath('./')
-                    setConfig('General', 'default_output_dir', path)
-                    print(f"The default output is now set to the current working directory: {path}")
+                    setConfig('General', 'default_output_dir', './')
+                    print(f"The default output is now set to the current working directory at runtime")
+                case './':
+                    cwd = os.getcwd()
+                    setConfig('General', 'default_output_dir', cwd)
+                    print(f"The default output directory is now set to this directory: {cwd}")
                 case str():
                     if os.path.exists(value):
-                        setConfig('General', 'default_output_dir', value)
-                        print(f"The default output is now set to {value}")
+                        absvalue = os.path.abspath(value)
+                        setConfig('General', 'default_output_dir', absvalue)
+                        print(f"The default output is now set to {absvalue}")
                     else:
                         print(f"Invalid path: {value}")
-                        raise ValueError
+                        raise ValueError()
+        
+        case 'prioritize-cf':
+            match value:
+                case 'true'|'True':
+                    setConfig('Other', 'prioritize_cf', 'True')
+                    print('The dependencies will now prioritize Curseforge')
+                case 'false'|'False':
+                    setConfig('Other', 'prioritize_cf', 'False')
+                    print('The dependencies will now prioritize Modrinth')
+                case _:
+                    switchedValue = 'False' if config['Other']['prioritize_cf'] == 'True' else 'True'
+                    setConfig('Other', 'prioritize_cf', switchedValue)
+                    print(f'prioritize-cf now toggled to {switchedValue}')
+                    
                 
         case _:        
             print(f"""
 Configuration list:
     Curseforge:
             "cf-api-key [key]" -> sets the curseforge api key
+            
     General:
             "default-output-dir [path]" = '{config['General'].get('default_output_dir')}' -> the default output directory for downloads.
-                [path] can be either an valid path or 'cwd' to set to the current working directory
+                                ^^^^^^ Can be either an valid path, './', or 'cwd'
+                                "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
+                                "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
+                                
+    Dependencies:
+            "prioritize-cf [True or False]" = {config['Other']['prioritize_cf']} -> as of now, anything dependency related autos to modrinth as default, set this to true to change this behavior to curseforge
+                        Toggles in case the value is not provided (or is invalid)
+                        
     thats it for now lmao               
-""" )
-    sys.exit(0)   
+                """)
+    sys.exit(0)
     
+   
+""" 
+CONFIGURATION CONCEPTS FOR THE FUTURE MAYBE MAYBE:
+    Dependency resolution
+    - api-priority [modrinth, curseforge] -> as of now, anything dependency related autos to modrinth default (to curseforge only if it is not on modrinth), this could help set the priority for the user
+    ^ as for now imma implement it as a bool called prioritize-cf, which accepts true, false or none (case none it toggles)
+    
+    General:
+    - Literally the default mod loader, how could i have fucking forgotten
+    
+    Debug?
+    - maybe verbose level?? i just dont know what i would change in questions of printing
+    
+"""
+
 
 
 if __name__ == "__main__":
