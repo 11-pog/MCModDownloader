@@ -32,7 +32,7 @@ We're not responsible for any damage caused by this package, including but not l
 
 Note: These installation steps are temporary until the package is released on PyPI.
 
-1. Go into the **Releases** section and download the most recent version of the tarball (1.0.dev3.tar.gz at the time).
+1. Go into the **Releases** section and download the most recent version of the tarball (1.0.dev4.tar.gz at the time).
 2. Open a terminal or command prompt and navigate to the directory in which you downloaded the tarball.
 3. Run the following command: "pip install [path to the tarball]".
 
