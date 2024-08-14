@@ -55,21 +55,34 @@ General usage: Use "mcmm" as a prefix to run a command, then add the arguments (
 
 #### Mod Filtering Parameters
 
-- "-g [game version]" to specify a game version
-- "-l [mod loaders]" to specify a single or multiple mod loaders (defaults to forge and neoforge)
-- "-r [version type]" **DEPRECATED:** to specify the type of version to the mod (Release, Beta, Alpha). Note that this parameter is broken and may not work with CurseForge links.
+- "-g [game version]" - to specify a game version
+- "-l [mod loaders]" - to specify a single or multiple mod loaders (defaults to forge and neoforge)
+- "-r [version type]" - **DEPRECATED:** to specify the type of version to the mod (Release, Beta, Alpha). Note that this parameter is broken and may not work with CurseForge links.
 
 #### Some extra commands
 
-- "-o" optional output directory, always defaults to the folder you're in
-- "-c" set configurations, only has "cf-api-key" yet
-- "-h" or "--help" prints all commands with a detailed description (and aliases/long versions)
+- "-o" - optional output directory, default can be configured in '--configs'
+- "-c" - set configurations, refer to configs for more info
+- "-h" or "--help" - prints all commands with a detailed description (and aliases/long versions)
 
-#### **WIP:** Dependency resolution (This is a placeholder, none of these do anything yet)
+#### **WIP:** Dependency resolution
 
-- "-rd" **Not implemented:** Attempts to resolve any cached missing dependencies.
-- "-bl" **Not implemented:** Automatically blacklists any dependencies removed by -rw
-- "-rw" **Not implemented:** Opens the missing dependencies file for manual review and editing
+- "-rd" - **Not implemented:** Attempts to resolve any cached missing dependencies.
+- "-bl" - **Not implemented:** Automatically blacklists any dependencies removed with -rw
+- "-rw" - Opens the missing dependencies file for manual review and editing
+
+### Configs
+
+Here are the configurations (-c) currently implemented:
+
+- Api Specific:
+  - *cf-api-key [Api key]* -> configures the curseforge api key
+- General
+  - *default-output-dir [directory path]* -> Sets the default output directory when the -o parameter is not specified. You can enter a valid directory path, 'cwd', or './'
+    - 'cwd' sets the default output directory to the current working directory of the script **at runtime**, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
+    - './' sets the default output directory to the **absolute path** of the current working directory **at the time the setting is configured**, which means it will remain fixed even if the script is run from a different directory. For example, if you set 'default-output-dir ./' while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
+- Other
+  - *prioritize-cf [True or False]* -> Sets if the MissingDependencies.txt will prioritize Curseforge or Modrinth links.
 
 ### Output
 

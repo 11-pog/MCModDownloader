@@ -1,44 +1,134 @@
 # main.py
 
+# General Imports
 import argparse
 import asyncio
 import configparser
+import subprocess
 import os
 import sys
 import json
 
+
+# Imports custom classes
 from mcmm.MCModDownloader import MCModDownloader
 from mcmm.MCM_Utils import MCM_Utils
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 
-config = configparser.ConfigParser(allow_no_value=True)
-configPath = os.path.join(os.path.dirname(__file__), "config")
-configFile = os.path.join(configPath, 'config.ini')
 
+# Sets up configparser object and paths 
+config = configparser.ConfigParser(allow_no_value=True) # Configparses object
+configPath = os.path.join(os.path.dirname(__file__), "config") # Configs dir path
+
+configFile = os.path.join(configPath, 'config.ini') # Config.ini path
+cacheFile = os.path.join(configPath, 'MCMM_Cache.json') # MCMM_Cache.json path
+
+
+
+def cache(key:str, value:any=None) -> dict|None:
+    """Simple cache function, caches the data in value to the specified key, return the key data if key is None.
+
+    Args:
+        key (str): the specified json key.
+        value (any, optional): Value to write to the key. Returns the key value if None. Defaults to None.
+
+    Returns:
+        dict|None: The value of the specified key, None if writing.
+    """
+    
+    if value is None:        
+        with open(cacheFile, 'r') as f:
+            data = json.load(f)
+            return data.get(key)
+        
+    with open(cacheFile, 'r+') as f:
+            data = json.load(f)
+            data[key] = value
+            f.seek(0)
+            json.dump(data, f)
+            f.truncate()
+        
+        
+        
 def saveConfig():
+    """Saves the current loaded config into the config.ini file.
+    """
     with open(configFile, 'w') as f:
         config.write(f)
 
-if not os.path.exists(configFile):    
-    os.makedirs(configPath, exist_ok=True)
+
+
+def setConfig(section: str, option: str, value: any):
+    config.set(section, option, value)
     saveConfig()
 
+
+
+def get_element(input: list, index: int):
+    if 0 <= index < len(input):
+        return input[index]
+    else:
+        return None
+
+
+
+def open_file_and_wait(path: str):
+    """Generic open txt file and wait until its closed function. Uses notepad.
+
+    Args:
+        path (str): Path to the file to be opened
+    """
+    if os.name == 'nt':
+        subprocess.Popen(['notepad.exe', path]).communicate()
+        
+    elif os.name == 'posix':
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.Popen([opener, path]).communicate()
+
+
+
+# Creating the files if they dont exist
+os.makedirs(configPath, exist_ok=True)
+
+if not os.path.exists(configFile):
+    saveConfig()
+    
+if not os.path.exists(cacheFile):
+    with open(cacheFile, 'w') as f:
+        json.dump({}, f)
+
+
+
+# Setting up the config.ini file
 config.read(configFile)
 
-if not config.has_section('Curseforge'):
-    config.add_section('Curseforge')
+sections = ['Curseforge', 'General', 'Other']
+
+for section in sections:
+    if not config.has_section(section):
+        config.add_section(section)
 
 config['Curseforge'].setdefault('api_key', '')
+config['General'].setdefault('default_output_dir', './')
+config['Other'].setdefault('prioritize_CF', 'False')
 
 saveConfig()
 
+
+# Creating Class instances
 MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
 CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
 
 
-async def main(mainArguments: argparse.Namespace) -> None:    
+
+async def main(mainArguments: argparse.Namespace) -> None:
+    """Main entry point
+
+    Args:
+        mainArguments (argparse.Namespace): Parsed arguments
+    """
     successful = []
     failed = []
 
@@ -90,15 +180,18 @@ async def main(mainArguments: argparse.Namespace) -> None:
 Missing Dependencies FOUND
 MissingDependencies.txt created
 
-Make sure to check the detected missing dependencies before trying to resolve [WIP]
+Run mcmm -rw to open the file and edit it if necessary.
+Make sure to check the detected missing dependencies before trying to resolve. [WIP]
 """)
             
         txtfile = []
         tasks = []
+        
+        prioritize_cf = config['Other']['prioritize_cf'] == 'True'
                         
         async def getName(dep: tuple[str, int]):
-            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'])
-            url, hostid = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']])       
+            name = await MCUtils.getSpecifiedData(dep, ['title', 'name'], prioritizeCF=prioritize_cf)
+            url, hostid = await MCUtils.getSpecifiedData(dep, ['slug', ['links', 'websiteUrl']], prioritizeCF=prioritize_cf)       
             txtfile.append((name, (url, hostid)))
          
                 
@@ -117,6 +210,9 @@ Make sure to check the detected missing dependencies before trying to resolve [W
                 
         with open(dependencyPath, 'w', encoding='utf-8') as f:
             f.write("- " + "\n- ".join(finaltxt))
+            
+        absDependencyPath = os.path.abspath(dependencyPath)
+        cache('DEPENDENCY_PATH', absDependencyPath)
 
 
     if len(dependencyIdList) > 0:
@@ -154,12 +250,23 @@ Make sure to check the detected missing dependencies before trying to resolve [W
 
 
 
-def dependencyResolve(args):
-    pass
+def dependencyResolve(args): #WIP
+    if args.review == True:
+        dependencyPath = cache('DEPENDENCY_PATH')
+        
+        if dependencyPath is None:
+            print("There are no cached dependencies to be resolved")
+            return
+                        
+        print("Opening file, close the file to continue...")
+        open_file_and_wait(dependencyPath)                  
+        print('Done!')
+
 
 
 def get_arguments() -> tuple[argparse.Namespace, int]:
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
+    defaultOutput = config["General"]['default_output_dir']
     
     input = parser.add_mutually_exclusive_group()
         
@@ -175,11 +282,11 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     
     # Extra parameters
     extra_group = parser.add_argument_group(title="Extra commands", description="Extra commands for this package")
-    extra_group.add_argument("-o", "--output", help="Output directory for the mod", default="./")
+    extra_group.add_argument("-o", "--output", help=f"Output directory for the mod, current default = '{defaultOutput}'. use -c default-output-dir to set or change this", default=defaultOutput)
     extra_group.add_argument("-c", "--config", help="configurations for this package", nargs='*')
     
     # WIP: Dependency resolution commands - Currently dont do anything     
-    dep_group = parser.add_argument_group(title="Dependency resolution [WIP]", description="Commands to help manage and resolve missing dependencies, Currently does nothing as its still wip")   
+    dep_group = parser.add_argument_group(title="Dependency resolution", description="WIP: Commands to help manage and resolve missing dependencies")   
      
     dep_group.add_argument("-rd", "--resolve",
                            help="Not implemented: Attempts to resolve any cached missing dependencies. Before using this command, it's recommended to run `--review` to verify the dependencies, as some mods may report false positives.",
@@ -190,7 +297,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
                            action="store_true")
     
     dep_group.add_argument("-rw", "--review",
-                           help="Not implemented: Opens the missing dependencies file for manual review and editing. This allows you to verify and correct any dependencies before attempting to resolve them.",
+                           help="Opens the missing dependencies file for manual review and editing. This allows you to verify and correct any dependencies before attempting to resolve them.",
                            action="store_true")
     
     try:
@@ -211,42 +318,23 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
                         
         sys.exit(e.code)
 
-    
+
     
 def run():        
     args, call_type = get_arguments()
         
-    if call_type == 1: # As dr is still wip, once it gets released this will probably change
-        print("Sorry, dependency resolution is currently WIP and does not do anything yet.")
+    if call_type == 1:
+        dependencyResolve(args)
         return
     
-    if call_type == 2:
-        if len(args.config) == 0 or args.config[0] != 'cf-api-key':
-            print(
-                "Configuration list\n"
-                "CURSEFORGE:\n"
-                '  "cf-api-key [key]" -> sets the curseforge api key\n'
-                'thats it for now lmao'
-            )
-            return
-                
-        if len(args.config) < 2:
-            print('Please enter a valid key')
-            return
-                
-        config.set('Curseforge', 'api_key', args.config[1])                
-        saveConfig()
-            
-        CFAPIInstance = CurseforgeAPI()             
-        if not asyncio.run(CFAPIInstance.is_key_valid()):
-            print("Invalid api key")
-            return
-            
-        print(
-            "Api key set\n"
-            "You can now use the mcmm package"
-            )
-        return
+    if call_type == 2:        
+        key = get_element(args.config, 0)
+        value = get_element(args.config, 1)
+        
+        try:
+            configure(key, value)
+        except ValueError:
+            sys.exit(0)
         
     
     if config['Curseforge']['api_key'] == '':
@@ -272,6 +360,101 @@ def run():
         return
         
     asyncio.run(main(args))
+
+
+
+def configure(key: str|None, value: str|int|None):
+    def check_value():
+        if value is None:
+            print(f'Please enter a valid value for {key}')
+            raise ValueError()
+           
+            
+    match key:
+        case "cf-api-key":
+            check_value()    
+                                        
+            config.set('Curseforge', 'api_key', value)                
+            saveConfig()
+                    
+            CFAPIInstance = CurseforgeAPI()             
+            if not asyncio.run(CFAPIInstance.is_key_valid()):
+                print("Invalid api key")
+                return
+                    
+            print(
+                "Api key set\n"
+                "You can now use the mcmm package"
+                )            
+        
+        case 'default-output-dir':
+            check_value()
+            
+            match value:               
+                case 'cwd':
+                    setConfig('General', 'default_output_dir', './')
+                    print(f"The default output is now set to the current working directory at runtime")
+                case './':
+                    cwd = os.getcwd()
+                    setConfig('General', 'default_output_dir', cwd)
+                    print(f"The default output directory is now set to this directory: {cwd}")
+                case str():
+                    if os.path.exists(value):
+                        absvalue = os.path.abspath(value)
+                        setConfig('General', 'default_output_dir', absvalue)
+                        print(f"The default output is now set to {absvalue}")
+                    else:
+                        print(f"Invalid path: {value}")
+                        raise ValueError()
+        
+        case 'prioritize-cf':
+            match value:
+                case 'true'|'True':
+                    setConfig('Other', 'prioritize_cf', 'True')
+                    print('The dependencies will now prioritize Curseforge')
+                case 'false'|'False':
+                    setConfig('Other', 'prioritize_cf', 'False')
+                    print('The dependencies will now prioritize Modrinth')
+                case _:
+                    switchedValue = 'False' if config['Other']['prioritize_cf'] == 'True' else 'True'
+                    setConfig('Other', 'prioritize_cf', switchedValue)
+                    print(f'prioritize-cf now toggled to {switchedValue}')
+                    
+                
+        case _:        
+            print(f"""
+Configuration list:
+    Curseforge:
+            "cf-api-key [key]" -> sets the curseforge api key
+            
+    General:
+            "default-output-dir [path]" = '{config['General'].get('default_output_dir')}' -> the default output directory for downloads.
+                                ^^^^^^ Can be either an valid path, './', or 'cwd'
+                                "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
+                                "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
+                                
+    Dependencies:
+            "prioritize-cf [True or False]" = {config['Other']['prioritize_cf']} -> as of now, anything dependency related autos to modrinth as default, set this to true to change this behavior to curseforge
+                        Toggles in case the value is not provided (or is invalid)
+                        
+    thats it for now lmao               
+                """)
+    sys.exit(0)
+    
+   
+""" 
+CONFIGURATION CONCEPTS FOR THE FUTURE MAYBE MAYBE:
+    Dependency resolution
+    - api-priority [modrinth, curseforge] -> as of now, anything dependency related autos to modrinth default (to curseforge only if it is not on modrinth), this could help set the priority for the user
+    ^ as for now imma implement it as a bool called prioritize-cf, which accepts true, false or none (case none it toggles)
+    
+    General:
+    - Literally the default mod loader, how could i have fucking forgotten
+    
+    Debug?
+    - maybe verbose level?? i just dont know what i would change in questions of printing
+    
+"""
 
 
 
