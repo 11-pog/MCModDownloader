@@ -7,7 +7,7 @@ setuptools.setup(
     name="mcmm",
     version="1.0.dev5",
     author="OpinionThief",
-    author_email="alvessamuel872@gmail.com",
+    author_email="",
     description="A package to download Minecraft mods from Modrinth and Curseforge, comes with free spaghetti (code)",
     long_description=long_description,
     long_description_content_type="text/markdown",
