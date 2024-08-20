@@ -30,7 +30,7 @@ We're not responsible for any damage caused by this package, including but not l
 
 ### Installation
 
-1. Download PIP if you still dont have it (a little complicated, recommended searching for youtube tutorials if you dont know)
+1. Download PIP if you still dont have it (a little complicated, recommended searching for youtube tutorials if you dont know).
 2. Open a terminal or command prompt.
 3. Run the following command: "pip install MCMM".
 4. Wait for the installation to finish.
