@@ -30,11 +30,10 @@ We're not responsible for any damage caused by this package, including but not l
 
 ### Installation
 
-Note: These installation steps are temporary until the package is released on PyPI.
-
-1. Go into the **Releases** section and download the most recent version of the tarball (1.0.dev4.tar.gz at the time).
-2. Open a terminal or command prompt and navigate to the directory in which you downloaded the tarball.
-3. Run the following command: "pip install [path to the tarball]".
+1. Download PIP if you still dont have it (a little complicated, recommended searching for youtube tutorials if you dont know)
+2. Open a terminal or command prompt.
+3. Run the following command: "pip install MCMM".
+4. Wait for the installation to finish.
 
 ### Setting up
 
