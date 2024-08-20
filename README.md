@@ -81,6 +81,8 @@ Here are the configurations (-c) currently implemented:
   - *default-output-dir [directory path]* -> Sets the default output directory when the -o parameter is not specified. You can enter a valid directory path, 'cwd', or './'
     - 'cwd' sets the default output directory to the current working directory of the script **at runtime**, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
     - './' sets the default output directory to the **absolute path** of the current working directory **at the time the setting is configured**, which means it will remain fixed even if the script is run from a different directory. For example, if you set 'default-output-dir ./' while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
+  - *default-mod-loader [loader] [additional loaders] -> sets the default mod loaders for this package
+    - Can be: Forge, Neoforge, Fabric, and Quilt
 - Other
   - *prioritize-cf [True or False]* -> Sets if the MissingDependencies.txt will prioritize Curseforge or Modrinth links.
 

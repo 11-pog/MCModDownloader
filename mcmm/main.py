@@ -75,7 +75,20 @@ def get_element(input: list, index: int):
         return input[index]
     else:
         return None
+    
+    
+    
+def get_element_till_end(input: list, startingpoint: int):
+    if 0 <= startingpoint < len(input):
+        return input[startingpoint:]
+    else:
+        return None
 
+
+
+def deconstruct_mlconfig() -> list:
+    return config['General'].get('default_mod_loader').split(' ')
+    
 
 
 def open_file_and_wait(path: str):
@@ -113,7 +126,10 @@ for section in sections:
         config.add_section(section)
 
 config['Curseforge'].setdefault('api_key', '')
+
 config['General'].setdefault('default_output_dir', './')
+config['General'].setdefault('default_mod_loader', 'forge neoforge')
+
 config['Other'].setdefault('prioritize_CF', 'False')
 
 saveConfig()
@@ -282,7 +298,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     # Mod fetching parameters
     mod_group = parser.add_argument_group(title="Mod filtering parameters", description="Parameters to help fetch specific mod versions")
     mod_group.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
-    mod_group.add_argument("-l", "--loader", help="The mod loader for this mod (eg: forge, neoforge, fabric)", default=["forge", "neoforge"], nargs='+')
+    mod_group.add_argument("-l", "--loader", help=f"The mod loader for this mod (eg: forge, neoforge, fabric) (default = {', '.join(deconstruct_mlconfig())})", default=deconstruct_mlconfig(), nargs='+')
     mod_group.add_argument("-r", "--restrict", help="Restricts mod to specific version types [DEPRECATED: Broken]", choices=["Release", "Beta", "Alpha"], nargs='+') # DEPRECATED: Broken
     
     # Extra parameters
@@ -335,9 +351,10 @@ def run():
     if call_type == 2:        
         key = get_element(args.config, 0)
         value = get_element(args.config, 1)
+        other = get_element_till_end(args.config, 2)
         
         try:
-            configure(key, value)
+            configure(key, value, other)
         except ValueError:
             sys.exit(0)
         
@@ -368,19 +385,17 @@ def run():
 
 
 
-def configure(key: str|None, value: str|int|None):
+def configure(key: str|None, value: str|int|None, other: list):
     def check_value():
         if value is None:
             print(f'Please enter a valid value for {key}')
             raise ValueError()
-           
             
     match key:
         case "cf-api-key":
             check_value()    
-                                        
-            config.set('Curseforge', 'api_key', value)                
-            saveConfig()
+                           
+            setConfig('Curseforge', 'api_key', value)
                     
             CFAPIInstance = CurseforgeAPI()             
             if not asyncio.run(CFAPIInstance.is_key_valid()):
@@ -390,7 +405,39 @@ def configure(key: str|None, value: str|int|None):
             print(
                 "Api key set\n"
                 "You can now use the mcmm package"
-                )            
+                )      
+            
+                  
+        case 'default-mod-loader':
+            check_value()
+            
+            loaders = [value] + other if other else [value]
+            
+            def getModLoader(input):
+                match input.lower():
+                    case 'fabric':
+                        return 'fabric'
+                        
+                    case 'forge':
+                        return 'forge'
+                    
+                    case 'neoforge':
+                        return 'neoforge'
+                    
+                    case 'quilt':
+                        return 'quilt'
+                    
+                    case _:
+                        print(f"Invalid mod loader: {input}")
+                        raise ValueError
+
+            MlList = []
+                    
+            for ml in loaders:
+                MlList.append(getModLoader(ml))
+                        
+            setConfig('General', 'default_mod_loader', ' '.join(MlList))
+                 
         
         case 'default-output-dir':
             check_value()
@@ -411,6 +458,7 @@ def configure(key: str|None, value: str|int|None):
                     else:
                         print(f"Invalid path: {value}")
                         raise ValueError()
+        
         
         case 'prioritize-cf':
             match value:
@@ -438,6 +486,10 @@ Configuration list:
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
                                 
+            "default-mod-loader [loader_name] [additional_loaders]" -> sets the default mod loader.
+                                Available mod loaders: fabric, forge, neoforge, and quilt
+                                Example: "default-mod-loader forge neoforge"                 
+                                
     Dependencies:
             "prioritize-cf [True or False]" = {config['Other']['prioritize_cf']} -> as of now, anything dependency related autos to modrinth as default, set this to true to change this behavior to curseforge
                         Toggles in case the value is not provided (or is invalid)
@@ -452,9 +504,6 @@ CONFIGURATION CONCEPTS FOR THE FUTURE MAYBE MAYBE:
     Dependency resolution
     - api-priority [modrinth, curseforge] -> as of now, anything dependency related autos to modrinth default (to curseforge only if it is not on modrinth), this could help set the priority for the user
     ^ as for now imma implement it as a bool called prioritize-cf, which accepts true, false or none (case none it toggles)
-    
-    General:
-    - Literally the default mod loader, how could i have fucking forgotten
     
     Debug?
     - maybe verbose level?? i just dont know what i would change in questions of printing
