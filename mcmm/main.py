@@ -47,6 +47,12 @@ def cache(key:str, value:any=None) -> dict|None:
             f.seek(0)
             json.dump(data, f)
             f.truncate()
+            
+            
+            
+def clearCache():
+    with open(cacheFile, 'w') as f:
+        json.dump({}, f)
         
         
         
@@ -84,8 +90,7 @@ def open_file_and_wait(path: str):
     elif os.name == 'posix':
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.Popen([opener, path]).communicate()
-
-
+        
 
 # Creating the files if they dont exist
 os.makedirs(configPath, exist_ok=True)
@@ -94,8 +99,7 @@ if not os.path.exists(configFile):
     saveConfig()
     
 if not os.path.exists(cacheFile):
-    with open(cacheFile, 'w') as f:
-        json.dump({}, f)
+    clearCache()
 
 
 
@@ -114,7 +118,6 @@ config['Other'].setdefault('prioritize_CF', 'False')
 
 saveConfig()
 
-
 # Creating Class instances
 MCMD = MCModDownloader()
 MRAPI = ModrinthAPI()
@@ -129,6 +132,8 @@ async def main(mainArguments: argparse.Namespace) -> None:
     Args:
         mainArguments (argparse.Namespace): Parsed arguments
     """
+    clearCache()
+    
     successful = []
     failed = []
 
