@@ -478,7 +478,7 @@ Configuration list:
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
                                 
-            "default-mod-loader [loader_name] [additional_loaders]" -> sets the default mod loader.
+            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(deconstruct_mlconfig())}' -> sets the default mod loader.
                                 Available mod loaders: fabric, forge, neoforge, and quilt
                                 Example: "default-mod-loader forge neoforge"                 
                                 
