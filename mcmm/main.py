@@ -70,17 +70,9 @@ def setConfig(section: str, option: str, value: any):
 
 
 
-def get_element(input: list, index: int):
+def get_element(input: list, index: int, tillEnd: bool = False):
     if 0 <= index < len(input):
-        return input[index]
-    else:
-        return None
-    
-    
-    
-def get_element_till_end(input: list, startingpoint: int):
-    if 0 <= startingpoint < len(input):
-        return input[startingpoint:]
+        return input[index:] if tillEnd else input[index]
     else:
         return None
 
@@ -351,7 +343,7 @@ def run():
     if call_type == 2:        
         key = get_element(args.config, 0)
         value = get_element(args.config, 1)
-        other = get_element_till_end(args.config, 2)
+        other = get_element(args.config, 2, tillEnd=True)
         
         try:
             configure(key, value, other)
