@@ -70,17 +70,9 @@ def setConfig(section: str, option: str, value: any):
 
 
 
-def get_element(input: list, index: int):
+def get_element(input: list, index: int, tillEnd: bool = False):
     if 0 <= index < len(input):
-        return input[index]
-    else:
-        return None
-    
-    
-    
-def get_element_till_end(input: list, startingpoint: int):
-    if 0 <= startingpoint < len(input):
-        return input[startingpoint:]
+        return input[index:] if tillEnd else input[index]
     else:
         return None
 
@@ -351,7 +343,7 @@ def run():
     if call_type == 2:        
         key = get_element(args.config, 0)
         value = get_element(args.config, 1)
-        other = get_element_till_end(args.config, 2)
+        other = get_element(args.config, 2, tillEnd=True)
         
         try:
             configure(key, value, other)
@@ -487,7 +479,7 @@ Configuration list:
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
                                 
-            "default-mod-loader [loader_name] [additional_loaders]" -> sets the default mod loader.
+            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(deconstruct_mlconfig())}' -> sets the default mod loader.
                                 Available mod loaders: fabric, forge, neoforge, and quilt
                                 Example: "default-mod-loader forge neoforge"                 
                                 
