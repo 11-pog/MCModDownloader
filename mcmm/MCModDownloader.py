@@ -4,6 +4,7 @@ from typing import Literal
 import os
 import asyncio
 import re
+import emoji
 
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
 from mcmm.MCM_Utils import MCM_Utils
@@ -39,8 +40,10 @@ class MCModDownloader:
                 filename = f"{modData['name']}_{metadata['id']}.jar"
         
         
-        filename = re.sub(r'[ ]', '', filename)
+        filename = re.sub(r"[ ']+", '', filename)
         filename = re.sub(r'[;:\,=<>*%?\\|\/]+', '-', filename)
+        
+        filename = emoji.replace_emoji(filename)
         
         return filename, files, metadata, host
 

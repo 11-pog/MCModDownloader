@@ -21,9 +21,10 @@ setuptools.setup(
     ],
     python_requires=">=3.11",
     install_requires=[
-        'aiohttp>=3.10.2',
+        'aiohttp>=3.10.5',
+        'emoji>=2.12.1',
         'furl>=2.1.3',
-        'setuptools>=72.1.0'
+        'setuptools>=74.0.0'
         ],
     entry_points={
         "console_scripts": [

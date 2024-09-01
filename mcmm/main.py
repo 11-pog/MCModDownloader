@@ -474,14 +474,15 @@ def configure(key: str|None, value: str|int|None, other: list):
                     print(f'prioritize-cf now toggled to {switchedValue}')
                     
                 
-        case _:        
+        case _:
+            defaultOutput = config['General'].get('default_output_dir')
             print(f"""
 Configuration list:
     Curseforge:
             "cf-api-key [key]" -> sets the curseforge api key
             
     General:
-            "default-output-dir [path]" = '{config['General'].get('default_output_dir')}' -> the default output directory for downloads.
+            "default-output-dir [path]" = '{'cwd' if defaultOutput == './' else defaultOutput}' -> the default output directory for downloads.
                                 ^^^^^^ Can be either an valid path, './', or 'cwd'
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.

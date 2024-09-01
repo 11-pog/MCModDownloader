@@ -5,6 +5,8 @@ import os
 import asyncio
 import configparser
 
+from typing import Callable
+
 class Http404Error(Exception):
     pass
 
@@ -13,8 +15,6 @@ class HttpError(Exception):
 
 class InvalidKeyError(Exception):
     pass
-
-isGlobalRLMessageReset = 0
 
 class ModrinthAPI:
     def __init__(self, api_url="https://api.modrinth.com"):
@@ -203,9 +203,9 @@ class CurseforgeAPI:
         else:        
             files = await self.utils.get(f'{self.api_url}/v1/mods/{id}/files', headers=self.api_headers)
             finalFiles += files['data']
-
+            
         result = sorted(finalFiles, key=lambda x: x['fileDate'], reverse=True)
-
+        
         return result
     
 
@@ -213,14 +213,14 @@ class CurseforgeAPI:
     async def download(self, url: str,  *, parameters: dict = None):
         if not url:
             raise ValueError("You must provide a valid url")
-
+        
         fileList = await self.project_files(url, parameters)
-
+        
         if len(fileList) == 0:
             raise ValueError("No mod versions matching game versions or mod loader found, make sure youve gotten the right mod, and/or that it has a version for said loader/game version")
-
+        
         file = fileList[0]
-
+        
         fileUrl = file['downloadUrl']
         response = await self.utils.Dl_Data(fileUrl)
         return file, response
@@ -228,65 +228,67 @@ class CurseforgeAPI:
 
 class utils:
     def __init__(self):
-        pass
-    
-    
-    
+        self.globalRateLimitMessageReset = 0
+
+
     def get_slug_by_url(self, url: str):
         splitUrl = url.split('/')
-
+        
         if len(splitUrl) >= 3:
             return splitUrl[-1]
         else:
             raise ValueError("Invalid URL")
-        
-        
-        
-    async def get(self, url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
+
+
+    async def _httpSafeGuards(self, url: str, act: Callable, *, headers: dict = None, params: dict = None, retries: int = 7):
         attempt = 0
         async with aiohttp.ClientSession() as session:
             while attempt < retries:        
                 async with session.get(url, headers=headers, params=params) as response:
                     if response.status == 200:
-                        retry_after = response.headers.get('X-Ratelimit-Reset')
-                        if 'application/json' in response.headers.get('Content-Type', ''):
-                            return await response.json()
-                        else:
-                            return await response.text()
+                        return await act(response)
+                        
                     elif response.status == 429:
                         retry_after = response.headers.get('X-Ratelimit-Reset')
                         await self.handle_rate_limit_reset(retry_after)
+                        
                     elif response.status == 403:
                         raise InvalidKeyError(f"Invalid api key")
+                    
                     elif response.status != 404:
                         raise HttpError(f"Http get error {response.status}: {response.reason}")
+                    
                     else:
                         attempt += 1
                 await asyncio.sleep(0.5)                   
         raise Http404Error()
 
 
-
     async def handle_rate_limit_reset(self, retry_after: int) -> bool:
-        global isGlobalRLMessageReset
-        if isGlobalRLMessageReset <= 0:    
+        if self.globalRateLimitMessageReset <= 0:    
             print(f'Too many requests, please wait...')
-            isGlobalRLMessageReset += 60
+            self.globalRateLimitMessageReset += 60
         else:
-            isGlobalRLMessageReset -= 1
+            self.globalRateLimitMessageReset -= 1
         if retry_after:
             await asyncio.sleep(int(retry_after) + 5)
 
 
+    async def get(self, url: str, *, headers: dict = None, params: dict = None, retries: int = 7) -> dict:
+        async def adquire(response: object):
+            if 'application/json' in response.headers.get('Content-Type', ''):
+                return await response.json()
+            else:
+                return await response.text()
+            
+        return await self._httpSafeGuards(url, act = adquire, headers=headers,  params=params, retries=retries)
+
 
     async def Dl_Data(self, url: str) -> bytes:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers = {"Accept": "application/octet-stream"}) as response:
-                if response.status == 200:
-                    return await response.read()
-                else:
-                    raise Exception(f"Http get error {response.status}: {response.reason}")
-
+        async def download(response):
+            return await response.read()
+        
+        return await self._httpSafeGuards(url,  act = download, headers={"Accept": "application/octet-stream"}, retries=5)
 
 
     async def format_query(self, query: str):
