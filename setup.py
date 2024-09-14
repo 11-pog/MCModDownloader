@@ -1,11 +1,5 @@
 import setuptools
 
-requirements = []
-
-with open("requirements.txt") as f:
-    for line in f:
-        requirements.append(line)
-
 with open("README.md", "r") as f:
     long_description = f.read()
     
@@ -26,7 +20,12 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.11",
-    install_requires=requirements,
+    install_requires=[
+        "aiohttp>=3.10.5",
+        "emoji>=2.12.1",
+        "furl>=2.1.3",
+        "setuptools>=74.0.0"
+        ],
     entry_points={
         "console_scripts": [
             "mcmm=mcmm.main:run",

@@ -15,5 +15,7 @@
 #Config changes depending on the user
 /mcmm/config/
 
+/requirements.txt
+
 #Personal test file that i barely use
 /test.py
