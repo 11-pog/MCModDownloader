@@ -1,6 +1,6 @@
 # Minecraft Mod Downloader
 
-## Note: This is still in pre-release, you might find bugs n stuff, sorry for anything
+## Note: This is still in Alpha, so things might not work as expected
 
 A Python script to download Minecraft mods from Modrinth and Curseforge automatically.
 Supports single mod downloads, batch downloads from a list, and dependency resolution (Auto download still WIP (i dont even know if i will actually finish it lmao))
@@ -33,7 +33,7 @@ We're not responsible for any damage caused by this package, including but not l
 Note: These installation steps are temporary until the package is released on PyPI.
 
 1. Download PIP if you still dont have it (a little complicated, recommended searching for youtube tutorials if you dont know how to)
-2. Go into the **Releases** section and download the most recent version of the tarball (1.0.dev4.tar.gz at the time).
+2. Go into the **Releases** section and download the most recent version of the tarball (0.1.a.tar.gz at the time).
 3. Open a terminal or command prompt and navigate to the directory in which you downloaded the tarball.
 4. Run the following command: "pip install [path to the tarball]".
 
@@ -82,6 +82,8 @@ Here are the configurations (-c) currently implemented:
   - *default-output-dir [directory path]* -> Sets the default output directory when the -o parameter is not specified. You can enter a valid directory path, 'cwd', or './'
     - 'cwd' sets the default output directory to the current working directory of the script **at runtime**, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
     - './' sets the default output directory to the **absolute path** of the current working directory **at the time the setting is configured**, which means it will remain fixed even if the script is run from a different directory. For example, if you set 'default-output-dir ./' while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
+  - *default-mod-loader [loader] [additional loaders] -> sets the default mod loaders for this package
+    - Can be: Forge, Neoforge, Fabric, and/or Quilt
 - Other
   - *prioritize-cf [True or False]* -> Sets if the MissingDependencies.txt will prioritize Curseforge or Modrinth links.
 

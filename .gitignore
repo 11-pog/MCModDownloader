@@ -15,8 +15,5 @@
 #Config changes depending on the user
 /mcmm/config/
 
-#Decided to hardcode requirements as there are just a few, sorry
-/requirements.txt
-
 #Personal test file that i barely use
 /test.py
