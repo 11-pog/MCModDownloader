@@ -101,7 +101,7 @@ class MCModDownloader:
         
         for link in linklist:
             task.append(_simultaneousDownloads(link, params, output))   
-                                                        
+        
         await asyncio.gather(*task)
         
         return successfulList, failedList, dependencyList, downloadedList
@@ -114,19 +114,17 @@ class MCModDownloader:
                 linklist = []
                 for line in file:
                     link = line.strip()
-                    if link:
+                    if link and not link.startswith("//"): # Ignores Comments
                         linklist.append(link)
-                        
+                
                 return await self.multi_download(linklist, params, output)
-                        
+        
         except FileNotFoundError:
             print(f"ERROR: Input file {txtfile} was not found")
         except ValueError as e:
             print(f"An error occurred: {e}")
             
         return [], [], [], []
-    
-    
 
     async def saveFile(self, file: bytes, name: str, path: str):
         try:
