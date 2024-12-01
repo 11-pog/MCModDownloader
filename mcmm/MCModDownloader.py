@@ -114,7 +114,7 @@ class MCModDownloader:
                 linklist = []
                 for line in file:
                     link = line.strip()
-                    if link and not link.startswith("//"): # Ignores Comments
+                    if link and not (link.startswith(("//", "#", "-", "*"))): # Ignores Comments
                         linklist.append(link)
                 
                 return await self.multi_download(linklist, params, output)

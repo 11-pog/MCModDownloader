@@ -1,87 +1,35 @@
 # main.py
 
+
 # General Imports
 import argparse
 import asyncio
-import configparser
 import subprocess
 import os
 import sys
-import json
 
 
 # Imports custom classes
 from mcmm.MCModDownloader import MCModDownloader
 from mcmm.MCM_Utils import MCM_Utils
 from mcmm.MCSiteAPI import ModrinthAPI, CurseforgeAPI
+from helpers import cache, config, general
 
 
-# Sets up configparser object and paths 
-config = configparser.ConfigParser(allow_no_value=True) # Configparses object
+# TODO: Use a form of cache to store info about downloaded mods so that there is no need to make rpeated API calls on the dependency checking part (besides just being generally faster)
+mod_data_cache = []
+
 configPath = os.path.join(os.path.dirname(__file__), "config") # Configs dir path
 
 configFile = os.path.join(configPath, 'config.ini') # Config.ini path
 cacheFile = os.path.join(configPath, 'MCMM_Cache.json') # MCMM_Cache.json path
 
+app_config = config(configFile)
+app_cache = cache(cacheFile)
+_general = general()
 
-
-def cache(key:str, value:any=None) -> dict|None:
-    """Simple cache function, caches the data in value to the specified key, return the key data if key is None.
-
-    Args:
-        key (str): the specified json key.
-        value (any, optional): Value to write to the key. Returns the key value if None. Defaults to None.
-
-    Returns:
-        dict|None: The value of the specified key, None if writing.
-    """
-    
-    if value is None:        
-        with open(cacheFile, 'r') as f:
-            data = json.load(f)
-            return data.get(key)
-        
-    with open(cacheFile, 'r+') as f:
-            data = json.load(f)
-            data[key] = value
-            f.seek(0)
-            json.dump(data, f)
-            f.truncate()
-            
-            
-            
-def clearCache():
-    with open(cacheFile, 'w') as f:
-        json.dump({}, f)
-        
-        
-        
-def saveConfig():
-    """Saves the current loaded config into the config.ini file.
-    """
-    with open(configFile, 'w') as f:
-        config.write(f)
-
-
-
-def setConfig(section: str, option: str, value: any):
-    config.set(section, option, value)
-    saveConfig()
-
-
-
-def get_element(input: list, index: int, tillEnd: bool = False):
-    if 0 <= index < len(input):
-        return input[index:] if tillEnd else input[index]
-    else:
-        return None
-
-
-
-def deconstruct_mlconfig() -> list:
-    return config['General'].get('default_mod_loader').split(' ')
-    
-
+def fetch_modloader_config() -> list:
+    return app_config['General'].get('default_mod_loader').split(' ')
 
 def open_file_and_wait(path: str):
     """Generic open txt file and wait until its closed function. Uses notepad.
@@ -95,36 +43,7 @@ def open_file_and_wait(path: str):
     elif os.name == 'posix':
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.Popen([opener, path]).communicate()
-        
 
-# Creating the files if they dont exist
-os.makedirs(configPath, exist_ok=True)
-
-if not os.path.exists(configFile):
-    saveConfig()
-    
-if not os.path.exists(cacheFile):
-    clearCache()
-
-
-
-# Setting up the config.ini file
-config.read(configFile)
-
-sections = ['Curseforge', 'General', 'Other']
-
-for section in sections:
-    if not config.has_section(section):
-        config.add_section(section)
-
-config['Curseforge'].setdefault('api_key', '')
-
-config['General'].setdefault('default_output_dir', './')
-config['General'].setdefault('default_mod_loader', 'forge neoforge')
-
-config['Other'].setdefault('prioritize_CF', 'False')
-
-saveConfig()
 
 # Creating Class instances
 MCMD = MCModDownloader()
@@ -133,14 +52,13 @@ CFAPI = CurseforgeAPI()
 MCUtils = MCM_Utils()
 
 
-
 async def main(mainArguments: argparse.Namespace) -> None:
     """Main entry point
 
     Args:
         mainArguments (argparse.Namespace): Parsed arguments
     """
-    clearCache()
+    app_cache.clearCache()
     
     successful = []
     failed = []
@@ -200,7 +118,7 @@ Make sure to check the detected missing dependencies before trying to resolve. [
         txtfile = []
         tasks = []
         
-        prioritize_cf = config['Other']['prioritize_cf'] == 'True'
+        prioritize_cf = app_config['Other']['prioritize_cf'] == 'True'
                         
         async def getName(dep: tuple[str, int]):
             name = await MCUtils.getSpecifiedData(dep, ['title', 'name'], prioritizeCF=prioritize_cf)
@@ -225,7 +143,7 @@ Make sure to check the detected missing dependencies before trying to resolve. [
             f.write("- " + "\n- ".join(finaltxt))
             
         absDependencyPath = os.path.abspath(dependencyPath)
-        cache('DEPENDENCY_PATH', absDependencyPath)
+        app_cache('DEPENDENCY_PATH', absDependencyPath)
 
 
     if len(dependencyIdList) > 0:
@@ -265,7 +183,7 @@ Make sure to check the detected missing dependencies before trying to resolve. [
 
 def dependencyResolve(args): #WIP
     if args.review == True:
-        dependencyPath = cache('DEPENDENCY_PATH')
+        dependencyPath = app_cache('DEPENDENCY_PATH')
         
         if dependencyPath is None:
             print("There are no cached dependencies to be resolved")
@@ -279,7 +197,7 @@ def dependencyResolve(args): #WIP
 
 def get_arguments() -> tuple[argparse.Namespace, int]:
     parser = argparse.ArgumentParser(description="Download minecraft mods from Modrinth and Curseforge automatically (peak laziness)")  
-    defaultOutput = config["General"]['default_output_dir']
+    defaultOutput = app_config["General"]['default_output_dir']
     
     input = parser.add_mutually_exclusive_group()
         
@@ -290,7 +208,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     # Mod fetching parameters
     mod_group = parser.add_argument_group(title="Mod filtering parameters", description="Parameters to help fetch specific mod versions")
     mod_group.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
-    mod_group.add_argument("-l", "--loader", help=f"The mod loader for this mod (eg: forge, neoforge, fabric) (default = {', '.join(deconstruct_mlconfig())})", default=deconstruct_mlconfig(), nargs='+')
+    mod_group.add_argument("-l", "--loader", help=f"The mod loader for this mod (eg: forge, neoforge, fabric) (default = {', '.join(fetch_modloader_config())})", default=fetch_modloader_config(), nargs='+')
     mod_group.add_argument("-r", "--restrict", help="Restricts mod to specific version types [DEPRECATED: Broken]", choices=["Release", "Beta", "Alpha"], nargs='+') # DEPRECATED: Broken
     
     # Extra parameters
@@ -341,9 +259,9 @@ def run():
         return
     
     if call_type == 2:        
-        key = get_element(args.config, 0)
-        value = get_element(args.config, 1)
-        other = get_element(args.config, 2, tillEnd=True)
+        key = _general.get_element(args.config, 0)
+        value = _general.get_element(args.config, 1)
+        other = _general.get_element(args.config, 2, tillEnd=True)
         
         try:
             configure(key, value, other)
@@ -351,7 +269,7 @@ def run():
             sys.exit(0)
         
     
-    if config['Curseforge']['api_key'] == '':
+    if app_config['Curseforge']['api_key'] == '':
         print(            
 """
     You do not have a Curseforge API KEY setup!
@@ -387,7 +305,7 @@ def configure(key: str|None, value: str|int|None, other: list):
         case "cf-api-key":
             check_value()    
                            
-            setConfig('Curseforge', 'api_key', value)
+            app_config.setConfig('Curseforge', 'api_key', value)
                     
             CFAPIInstance = CurseforgeAPI()             
             if not asyncio.run(CFAPIInstance.is_key_valid()):
@@ -428,7 +346,7 @@ def configure(key: str|None, value: str|int|None, other: list):
             for ml in loaders:
                 MlList.append(getModLoader(ml))
                         
-            setConfig('General', 'default_mod_loader', ' '.join(MlList))
+            app_config.setConfig('General', 'default_mod_loader', ' '.join(MlList))
                  
         
         case 'default-output-dir':
@@ -436,16 +354,16 @@ def configure(key: str|None, value: str|int|None, other: list):
             
             match value:               
                 case 'cwd':
-                    setConfig('General', 'default_output_dir', './')
+                    app_config.setConfig('General', 'default_output_dir', './')
                     print(f"The default output is now set to the current working directory at runtime")
                 case './':
                     cwd = os.getcwd()
-                    setConfig('General', 'default_output_dir', cwd)
+                    app_config.setConfig('General', 'default_output_dir', cwd)
                     print(f"The default output directory is now set to this directory: {cwd}")
                 case str():
                     if os.path.exists(value):
                         absvalue = os.path.abspath(value)
-                        setConfig('General', 'default_output_dir', absvalue)
+                        app_config.setConfig('General', 'default_output_dir', absvalue)
                         print(f"The default output is now set to {absvalue}")
                     else:
                         print(f"Invalid path: {value}")
@@ -455,19 +373,19 @@ def configure(key: str|None, value: str|int|None, other: list):
         case 'prioritize-cf':
             match value:
                 case 'true'|'True':
-                    setConfig('Other', 'prioritize_cf', 'True')
+                    app_config.setConfig('Other', 'prioritize_cf', 'True')
                     print('The dependencies will now prioritize Curseforge')
                 case 'false'|'False':
-                    setConfig('Other', 'prioritize_cf', 'False')
+                    app_config.setConfig('Other', 'prioritize_cf', 'False')
                     print('The dependencies will now prioritize Modrinth')
                 case _:
-                    switchedValue = 'False' if config['Other']['prioritize_cf'] == 'True' else 'True'
-                    setConfig('Other', 'prioritize_cf', switchedValue)
+                    switchedValue = 'False' if app_config['Other']['prioritize_cf'] == 'True' else 'True'
+                    app_config.setConfig('Other', 'prioritize_cf', switchedValue)
                     print(f'prioritize-cf now toggled to {switchedValue}')
                     
                 
         case _:
-            defaultOutput = config['General'].get('default_output_dir')
+            defaultOutput = app_config['General'].get('default_output_dir')
             print(f"""
 Configuration list:
     Curseforge:
@@ -479,12 +397,12 @@ Configuration list:
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
                                 
-            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(deconstruct_mlconfig())}' -> sets the default mod loader.
+            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(fetch_modloader_config())}' -> sets the default mod loader.
                                 Available mod loaders: fabric, forge, neoforge, and quilt
                                 Example: "default-mod-loader forge neoforge"                 
                                 
     Dependencies:
-            "prioritize-cf [True or False]" = {config['Other']['prioritize_cf']} -> as of now, anything dependency related autos to modrinth as default, set this to true to change this behavior to curseforge
+            "prioritize-cf [True or False]" = {app_config['Other']['prioritize_cf']} -> as of now, anything dependency related autos to modrinth as default, set this to true to change this behavior to curseforge
                         Toggles in case the value is not provided (or is invalid)
                         
     thats it for now lmao               

@@ -18,7 +18,7 @@ We're not responsible for any damage caused by this package, including but not l
 - Deep Root Disease
 - Spaghettification
 - Non-Existence
-- Enlightment
+- Enlightenment
 - *Death*
 
 ### Requirements
