@@ -28,7 +28,7 @@ app_config = config(configFile)
 app_cache = cache(cacheFile)
 _general = general()
 
-def deconstruct_mlconfig() -> list:
+def fetch_modloader_config() -> list:
     return app_config['General'].get('default_mod_loader').split(' ')
 
 def open_file_and_wait(path: str):
@@ -208,7 +208,7 @@ def get_arguments() -> tuple[argparse.Namespace, int]:
     # Mod fetching parameters
     mod_group = parser.add_argument_group(title="Mod filtering parameters", description="Parameters to help fetch specific mod versions")
     mod_group.add_argument("-g", "--game-version", help="Version of minecraft for the mod (eg: 1.19.2, 1.20.1, etc)")
-    mod_group.add_argument("-l", "--loader", help=f"The mod loader for this mod (eg: forge, neoforge, fabric) (default = {', '.join(deconstruct_mlconfig())})", default=deconstruct_mlconfig(), nargs='+')
+    mod_group.add_argument("-l", "--loader", help=f"The mod loader for this mod (eg: forge, neoforge, fabric) (default = {', '.join(fetch_modloader_config())})", default=fetch_modloader_config(), nargs='+')
     mod_group.add_argument("-r", "--restrict", help="Restricts mod to specific version types [DEPRECATED: Broken]", choices=["Release", "Beta", "Alpha"], nargs='+') # DEPRECATED: Broken
     
     # Extra parameters
@@ -397,7 +397,7 @@ Configuration list:
                                 "cwd" sets the default output directory to the current working directory of the script at runtime, which means it will change depending on the directory from which the script is run. For example, if you run the script in D:/Videos, the default output directory will be D:/Videos, and if you run it in C:/Images, the default output directory will be C:/Images.
                                 "./" sets the default output directory to the absolute path of the current working directory at the time the setting is configured, which means it will remain fixed even if the script is run from a different directory. For example, if you set defaultoutputdir ./ while running the script in C:/Images, the default output directory will always be C:/Images, even if you run the script in D:/Videos later.
                                 
-            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(deconstruct_mlconfig())}' -> sets the default mod loader.
+            "default-mod-loader [loader_name] [additional_loaders]" = '{', '.join(fetch_modloader_config())}' -> sets the default mod loader.
                                 Available mod loaders: fabric, forge, neoforge, and quilt
                                 Example: "default-mod-loader forge neoforge"                 
                                 
