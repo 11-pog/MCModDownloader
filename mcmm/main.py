@@ -48,14 +48,15 @@ def cache(key:str, value:any=None) -> dict|None:
             json.dump(data, f)
             f.truncate()
             
-            
-            
+
+
 def clearCache():
     with open(cacheFile, 'w') as f:
         json.dump({}, f)
         
-        
-        
+
+
+
 def saveConfig():
     """Saves the current loaded config into the config.ini file.
     """
@@ -69,7 +70,7 @@ def setConfig(section: str, option: str, value: any):
     saveConfig()
 
 
-
+# TODO: Multiple parts of the current code can have this function implemented.
 def get_element(input: list, index: int, tillEnd: bool = False):
     if 0 <= index < len(input):
         return input[index:] if tillEnd else input[index]
@@ -80,7 +81,7 @@ def get_element(input: list, index: int, tillEnd: bool = False):
 
 def deconstruct_mlconfig() -> list:
     return config['General'].get('default_mod_loader').split(' ')
-    
+
 
 
 def open_file_and_wait(path: str):
