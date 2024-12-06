@@ -45,7 +45,7 @@ class cache:
             json.dump({}, f)
 
 
-
+# TODO: make so sections, keys, default values, and the allow_no_value value to be input when instancing the class, instead of hard-coding it.
 class config:
     def __init__(self, config_file_path) -> None:
         self.config_file_path = config_file_path
