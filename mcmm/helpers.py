@@ -3,8 +3,8 @@ import json
 import os
 
 class cache:
-    def __init__(self, cache_path) -> None:
-        self.cache_file_path = cache_path
+    def __init__(self, cache_file_path) -> None:
+        self.cache_file_path = cache_file_path
 
 
     def setup(self):
@@ -45,13 +45,13 @@ class cache:
             json.dump({}, f)
 
 
-# TODO: make so sections, keys, default values, and the allow_no_value value to be input when instancing the class, instead of hard-coding it.
 class config:
-    def __init__(self, config_file_path) -> None:
+    def __init__(self, config_file_path, default_structure, *, allow_no_value=False) -> None:
         self.config_file_path = config_file_path
-        self.config = configparser.ConfigParser(allow_no_value=True) # Configparses object
         
-        self.sections = ['Curseforge', 'General', 'Other']
+        self.config = configparser.ConfigParser(allow_no_value=allow_no_value) # Configparses object
+        
+        self.default_structure = default_structure
         self.setup()
 
 
@@ -65,23 +65,20 @@ class config:
             self.saveConfig()
         
         self.setup_sections()
+        self.saveConfig()
 
 
     def setup_sections(self):
         self.config.read(self.config_file_path)
 
-        for section in self.sections:
+        for section in self.default_structure:
             if not self.config.has_section(section):
                 self.config.add_section(section)
-
-        self.config['Curseforge'].setdefault('api_key', '')
-
-        self.config['General'].setdefault('default_output_dir', './')
-        self.config['General'].setdefault('default_mod_loader', 'forge neoforge')
-
-        self.config['Other'].setdefault('prioritize_CF', 'False')
-
-        self.saveConfig()
+            
+            if self.default_structure[section] is not None:
+                for key in self.default_structure[section]:
+                    value = self.default_structure[section][key]
+                    self.config[section].setdefault(key, '' if value is None else value)
 
 
     def saveConfig(self):
@@ -107,3 +104,23 @@ class general:
             return input[index:] if return_all_until_end else input[index]
         else:
             return None
+
+
+# Testing
+if __name__ == '__main__':
+    configPath = os.path.join(os.path.dirname(__file__), "config") # Configs dir path
+    configFile = os.path.join(configPath, 'config.ini') # Config.ini path
+    
+    Config = config(configFile, default_structure={
+        'Curseforge': {
+            'api_key': None
+        },
+        'General': {
+            'default_output_dir': './',
+            'default_mod_loader': 'forge neoforge'
+        },
+        'Other': {
+            'prioritize_CF': 'False'
+        }, 
+        'Testes_Malignos': None
+    }, allow_no_value=True)

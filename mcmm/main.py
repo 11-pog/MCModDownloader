@@ -24,9 +24,23 @@ configPath = os.path.join(os.path.dirname(__file__), "config") # Configs dir pat
 configFile = os.path.join(configPath, 'config.ini') # Config.ini path
 cacheFile = os.path.join(configPath, 'MCMM_Cache.json') # MCMM_Cache.json path
 
-app_config = config(configFile)
+app_config = config(configFile, default_structure={
+    'Curseforge': {
+        'api_key': None
+    },
+    'General': {
+        'default_output_dir': './',
+        'default_mod_loader': 'forge neoforge'
+    },
+    'Other': {
+        'prioritize_CF': 'False'
+    }
+}, allow_no_value=True)
+
+
 app_cache = cache(cacheFile)
 _general = general()
+
 
 def fetch_modloader_config() -> list:
     return app_config['General'].get('default_mod_loader').split(' ')
@@ -75,7 +89,7 @@ async def main(mainArguments: argparse.Namespace) -> None:
 
     if mainArguments.mod_link is not None:
         failedStatus, result, dlid, dpid = await MCMD.download_mod(mainArguments.mod_link, parameters, mainArguments.output)
-             
+
         if dpid:
             dependencyIdList.append(dpid)        
         if not failedStatus:
@@ -261,7 +275,7 @@ def run():
     if call_type == 2:        
         key = _general.get_element(args.config, 0)
         value = _general.get_element(args.config, 1)
-        other = _general.get_element(args.config, 2, tillEnd=True)
+        other = _general.get_element(args.config, 2, return_all_until_end=True)
         
         try:
             configure(key, value, other)
@@ -279,7 +293,7 @@ def run():
 """            
             )
         return
-          
+        
     if not asyncio.run(CFAPI.is_key_valid()):
         print(
 """ 
@@ -304,7 +318,7 @@ def configure(key: str|None, value: str|int|None, other: list):
     match key:
         case "cf-api-key":
             check_value()    
-                           
+            
             app_config.setConfig('Curseforge', 'api_key', value)
                     
             CFAPIInstance = CurseforgeAPI()             
@@ -317,7 +331,7 @@ def configure(key: str|None, value: str|int|None, other: list):
                 "You can now use the mcmm package"
                 )      
             
-                  
+            
         case 'default-mod-loader':
             check_value()
             
@@ -347,7 +361,7 @@ def configure(key: str|None, value: str|int|None, other: list):
                 MlList.append(getModLoader(ml))
                         
             app_config.setConfig('General', 'default_mod_loader', ' '.join(MlList))
-                 
+            
         
         case 'default-output-dir':
             check_value()
@@ -409,8 +423,10 @@ Configuration list:
                 """)
     sys.exit(0)
     
-   
-""" 
+
+
+"""
+TODO:
 CONFIGURATION CONCEPTS FOR THE FUTURE MAYBE MAYBE:
     Dependency resolution
     - api-priority [modrinth, curseforge] -> as of now, anything dependency related autos to modrinth default (to curseforge only if it is not on modrinth), this could help set the priority for the user
@@ -420,8 +436,6 @@ CONFIGURATION CONCEPTS FOR THE FUTURE MAYBE MAYBE:
     - maybe verbose level?? i just dont know what i would change in questions of printing
     
 """
-
-
 
 if __name__ == "__main__":
     run()
