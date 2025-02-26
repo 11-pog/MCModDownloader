@@ -2,7 +2,9 @@
 
 ## Note: This is still in Alpha, so things might not work as expected
 
-## Important: This barely works now
+## DEPRECATED: This barely works now
+
+## Possibility: I am considering Rewriting this CLI application in C# (for it would be simpler to download and use, and also probably more performant), with more planning behind too instead of just "what if i added [feature]" midway through developing.
 
 A Python script to download Minecraft mods from Modrinth and Curseforge automatically.
 Supports single mod downloads, batch downloads from a list, and dependency resolution (Auto download still WIP (i dont even know if i will actually finish it lmao))
